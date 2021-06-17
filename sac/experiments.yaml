@@ -1,7 +1,24 @@
-pen:
+# Working fine
+pendulum:
   env_name: "Pendulum-v0"
   action_scale: 2
+
+  # Working fine
 ll:
   env_name: "LunarLanderContinuous-v2"
+
+# To be tuned
 mc:
   env_name: "MountainCarContinuous-v0"
+
+# To be tuned
+hc:
+  env_name: "HalfCheetahBulletEnv-v0"
+
+# To be tuned
+ant:
+  env_name: "AntBulletEnv-v0"
+
+# To be tuned
+taur:
+  env_name: "MinitaurBulletEnv-v0"

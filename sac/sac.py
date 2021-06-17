@@ -63,6 +63,7 @@ class SAC:
 
         ep_len = 0
         highscore = -np.inf
+        episode_steps = 0
         while timestep < N_TIMESTEPS:
             timestep += 1
             state = torch.from_numpy(_state[None,:]).float()
@@ -76,14 +77,18 @@ class SAC:
             total_reward += reward
             episodic_reward += reward
                 
+            episode_steps += 1
 
-            buffer.add(_state.copy(), action.copy(), reward, next_state.copy(),done)
+            # if done and episode_steps == env._max_episode_steps:
+            #     done = 0
+            buffer.add(_state.copy(), action.copy(), reward, next_state.copy(),not(done and episode_steps == env._max_episode_steps) and done)
 
             _state = next_state
             if done:
                 print(f"Episode: {episodes_passed}, reward: {episodic_reward}")
                 episodic_reward = 0
                 episodes_passed += 1
+                episode_steps = 0
                 _state = env.reset()
 
             if timestep % UPDATE_EVERY == 0 and timestep > BUFFER_SIZE:

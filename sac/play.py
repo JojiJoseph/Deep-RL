@@ -39,7 +39,11 @@ action_dim = eval_env.action_space.shape[0]
 actor = Actor(state_dim, action_dim)
 
 actor.load_state_dict(torch.load(f"./{experiment}.pt"))
-
+try:
+    if not eval:
+        eval_env.render()
+except:
+    pass
 n_episodes = 1
 if eval: n_episodes = 100
 done = False
