@@ -11,7 +11,7 @@ ll:
 mc:
   env_name: "MountainCarContinuous-v0"
 
-# To be tuned
+# Wait for 500 episodes. Then magic happens.
 hc:
   env_name: "HalfCheetahBulletEnv-v0"
 
