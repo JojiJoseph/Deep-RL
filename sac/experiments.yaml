@@ -1,0 +1,7 @@
+pen:
+  env_name: "Pendulum-v0"
+  action_scale: 2
+ll:
+  env_name: "LunarLanderContinuous-v2"
+mc:
+  env_name: "MountainCarContinuous-v0"
