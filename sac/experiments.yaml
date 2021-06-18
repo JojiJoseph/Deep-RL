@@ -3,6 +3,8 @@ pendulum:
   env_name: "Pendulum-v0"
   action_scale: 2
   gamma: 0.99
+  tau: 0.05
+  n_eval_episodes: 15
 
   # Working fine
 ll:
