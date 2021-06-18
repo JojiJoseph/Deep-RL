@@ -5,3 +5,15 @@
 [] Try custom reparameterization trick
 [] Try more deep actor and critics
 [] Better logging
+[] Hyperparameters
+    [x] alpha
+    [x] tau
+    [x] n_eval_episodes
+    [x] gamma
+    [x] learning_rate
+    [x] update_every
+    [x] buffer_size
+    [x] n_timesteps
+    [] batch_size
+[x] Run evaluation only if buffer is full
+[] Save csv of returns

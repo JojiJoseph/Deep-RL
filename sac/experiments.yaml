@@ -2,6 +2,13 @@
 pendulum:
   env_name: "Pendulum-v0"
   action_scale: 2
+  gamma: 0.99
+  tau: 0.05
+  n_eval_episodes: 10
+  evaluate_every: 5000
+  update_every: 1000
+  buffer_size: 5000
+  n_timesteps: 50000
 
   # Working fine
 ll:

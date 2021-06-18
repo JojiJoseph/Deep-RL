@@ -9,13 +9,23 @@ from net import Actor, Critic
 from buffer import ReplayBuffer
 
 class SAC:
-    def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1):
+    def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1, alpha=0.2, learning_rate=3e-4,
+    gamma=0.99, tau=0.005, n_eval_episodes=10, evaluate_every=10_000, update_every=50, buffer_size=10_000, n_timesteps=1_000_000):
         self.env_name = env_name
         self.namespace = namespace
         self.action_scale = action_scale
+        self.alpha = alpha
+        self.learning_rate = learning_rate
+        self.gamma = gamma
+        self.tau = tau
+        self.n_eval_episodes = n_eval_episodes
+        self.evaluate_every = evaluate_every
+        self.update_every = update_every
+        self.buffer_size = buffer_size
+        self.n_timesteps = n_timesteps
     def learn(self):
         env_name = self.env_name
-        TAU = 0.005
+        TAU = self.tau
         env = gym.make(env_name)
 
         action_dim = env.action_space.shape[0]
@@ -37,19 +47,19 @@ class SAC:
         # critic_target_1.load_state_dict(critic_1.state_dict())
         # critic_target_2.load_state_dict(critic_2.state_dict())
 
-        opt_actor  = torch.optim.Adam(actor.parameters(), lr=1e-4)
-        opt_c1  = torch.optim.Adam(critic_1.parameters(), lr=1e-4)
-        opt_c2  = torch.optim.Adam(critic_2.parameters(), lr=1e-4)
+        opt_actor  = torch.optim.Adam(actor.parameters(), lr=self.learning_rate)
+        opt_c1  = torch.optim.Adam(critic_1.parameters(), lr=self.learning_rate)
+        opt_c2  = torch.optim.Adam(critic_2.parameters(), lr=self.learning_rate)
 
-        BUFFER_SIZE = 10_000
+        BUFFER_SIZE = self.buffer_size
         BATCH_SIZE = 200
         buffer = ReplayBuffer(action_dim, state_dim, BUFFER_SIZE)
 
-        N_TIMESTEPS = 1_000_000
-        UPDATE_EVERY = 50
-        EVALUATE_EVERY = 10_000
-        ALPHA = 0.2
-        GAMMA = 0.99
+        N_TIMESTEPS = self.n_timesteps
+        UPDATE_EVERY = self.update_every
+        EVALUATE_EVERY = self.evaluate_every
+        ALPHA = self.alpha
+        GAMMA = self.gamma
 
         ACTION_SCALE = self.action_scale
 
@@ -79,8 +89,6 @@ class SAC:
                 
             episode_steps += 1
 
-            # if done and episode_steps == env._max_episode_steps:
-            #     done = 0
             buffer.add(_state.copy(), action.copy(), reward, next_state.copy(),not(done and episode_steps == env._max_episode_steps) and done)
 
             _state = next_state
@@ -136,26 +144,39 @@ class SAC:
                             pt.data.mul_(1-TAU)
                             pt.data.add_(TAU*p.data)
             
-            if timestep % EVALUATE_EVERY == 0:
+            if timestep % EVALUATE_EVERY == 0 and timestep > BUFFER_SIZE:
+                print("\nEvaluation\n==========")
                 eval_env = gym.make(env_name)
                 total = 0
-                for episode in range(10):
+                eval_returns = []
+                for episode in range(self.n_eval_episodes):
                     state = eval_env.reset()
                     done = False
+                    eval_return = 0
                     while not done:
                         with torch.no_grad():
                             state = state[None,:]
                             state = torch.from_numpy(state).float()
-                            action, _ = actor.get_action(state)
+                            action, _ = actor.get_action(state, eval=True)
                             action = action[0].detach().cpu().numpy()
                             state, reward, done,_ = eval_env.step(action*ACTION_SCALE)
-                            total += reward
-                
+                            eval_return += reward
+                        if done:
+                            eval_returns.append(eval_return)
 
-                avg = total/10
+                avg = np.mean(eval_returns)
+                std = np.std(eval_returns)
+                best = np.max(eval_returns)
+                worst = np.min(eval_returns)
+                print(f"Eval Episodes: {self.n_eval_episodes}")
+                print(f"Avg: {avg}")
+                print(f"Std: {std}")
+                print(f"Best: {best}, worst: {worst}")
                 if avg >= highscore:
                     highscore = avg
                     torch.save(actor.state_dict(), f"./{self.namespace}.pt")
-                print("highscore:", highscore)
+                    print("New High (Avg) Score! Saved!")
+                print(f"highscore: {highscore}\n")
                 eval_env.close()
+        print("\nTraining is Over!\n")
 
