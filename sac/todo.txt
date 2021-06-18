@@ -10,3 +10,4 @@
     [] tau
     [] n_eval_episodes
     [] gamma
+    [x] learning_rate

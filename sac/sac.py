@@ -9,11 +9,12 @@ from net import Actor, Critic
 from buffer import ReplayBuffer
 
 class SAC:
-    def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1, alpha=0.2):
+    def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1, alpha=0.2, learning_rate=3e-4):
         self.env_name = env_name
         self.namespace = namespace
         self.action_scale = action_scale
         self.alpha = alpha
+        self.learning_rate = learning_rate
     def learn(self):
         env_name = self.env_name
         TAU = 0.005
@@ -38,9 +39,9 @@ class SAC:
         # critic_target_1.load_state_dict(critic_1.state_dict())
         # critic_target_2.load_state_dict(critic_2.state_dict())
 
-        opt_actor  = torch.optim.Adam(actor.parameters(), lr=1e-4)
-        opt_c1  = torch.optim.Adam(critic_1.parameters(), lr=1e-4)
-        opt_c2  = torch.optim.Adam(critic_2.parameters(), lr=1e-4)
+        opt_actor  = torch.optim.Adam(actor.parameters(), lr=self.learning_rate)
+        opt_c1  = torch.optim.Adam(critic_1.parameters(), lr=self.learning_rate)
+        opt_c2  = torch.optim.Adam(critic_2.parameters(), lr=self.learning_rate)
 
         BUFFER_SIZE = 10_000
         BATCH_SIZE = 200
