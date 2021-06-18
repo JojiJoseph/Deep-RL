@@ -7,7 +7,7 @@
 [] Better logging
 [] Hyperparameters
     [x] alpha
-    [] tau
+    [x] tau
     [] n_eval_episodes
-    [] gamma
+    [x] gamma
     [x] learning_rate

@@ -10,16 +10,17 @@ from buffer import ReplayBuffer
 
 class SAC:
     def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1, alpha=0.2, learning_rate=3e-4,
-    gamma=0.99):
+    gamma=0.99, tau=0.005):
         self.env_name = env_name
         self.namespace = namespace
         self.action_scale = action_scale
         self.alpha = alpha
         self.learning_rate = learning_rate
         self.gamma = gamma
+        self.tau = tau
     def learn(self):
         env_name = self.env_name
-        TAU = 0.005
+        TAU = self.tau
         env = gym.make(env_name)
 
         action_dim = env.action_space.shape[0]
