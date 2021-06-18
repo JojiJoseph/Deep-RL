@@ -2,6 +2,7 @@
 pendulum:
   env_name: "Pendulum-v0"
   action_scale: 2
+  gamma: 0.99
 
   # Working fine
 ll:
