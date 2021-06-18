@@ -13,5 +13,7 @@
     [x] learning_rate
     [x] update_every
     [x] buffer_size
-    [] Run evaluation only if buffer is full
-    [] n_timesteps
+    [x] n_timesteps
+    [] batch_size
+[x] Run evaluation only if buffer is full
+[] Save csv of returns
