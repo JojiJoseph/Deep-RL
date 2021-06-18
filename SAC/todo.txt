@@ -21,5 +21,6 @@
 [] Script to plot csv files
     [x] Plot episodes vs score
     [x] plot timesteps vs score
-    [] Decorate plots
-    [] Plot with smoothening
+    [x] Decorate plots
+    [x] Plot with smoothening
+    [] Get better name for functions and variables used

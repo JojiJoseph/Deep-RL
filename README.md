@@ -5,7 +5,7 @@ Contains deep reinforcement learning algorithms I have implemented.
 
 Go to the folder of the algorithm.
 
-Then execute the following.
+Then execute the following. See `experiments.yaml` to get `experiment_name`.
 
 ```bash
 python train.py -e experiment_name
@@ -15,4 +15,10 @@ To run the saved agent,
 
 ```bash
 python play.py -e experiment_name
+```
+
+To plot the learning curves,
+
+```bash
+python plot.py -e experiment_name
 ```
