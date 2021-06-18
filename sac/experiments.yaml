@@ -4,7 +4,8 @@ pendulum:
   action_scale: 2
   gamma: 0.99
   tau: 0.05
-  n_eval_episodes: 15
+  n_eval_episodes: 10
+  evaluate_every: 10000
 
   # Working fine
 ll:
