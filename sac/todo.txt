@@ -5,3 +5,8 @@
 [] Try custom reparameterization trick
 [] Try more deep actor and critics
 [] Better logging
+[] Hyperparameters
+    [x] alpha
+    [] tau
+    [] n_eval_episodes
+    [] gamma

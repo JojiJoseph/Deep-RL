@@ -9,10 +9,11 @@ from net import Actor, Critic
 from buffer import ReplayBuffer
 
 class SAC:
-    def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1):
+    def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1, alpha=0.2):
         self.env_name = env_name
         self.namespace = namespace
         self.action_scale = action_scale
+        self.alpha = alpha
     def learn(self):
         env_name = self.env_name
         TAU = 0.005
@@ -48,7 +49,7 @@ class SAC:
         N_TIMESTEPS = 1_000_000
         UPDATE_EVERY = 50
         EVALUATE_EVERY = 10_000
-        ALPHA = 0.2
+        ALPHA = self.alpha
         GAMMA = 0.99
 
         ACTION_SCALE = self.action_scale
@@ -79,8 +80,6 @@ class SAC:
                 
             episode_steps += 1
 
-            # if done and episode_steps == env._max_episode_steps:
-            #     done = 0
             buffer.add(_state.copy(), action.copy(), reward, next_state.copy(),not(done and episode_steps == env._max_episode_steps) and done)
 
             _state = next_state
