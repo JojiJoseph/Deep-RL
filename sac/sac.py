@@ -10,7 +10,7 @@ from buffer import ReplayBuffer
 
 class SAC:
     def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1, alpha=0.2, learning_rate=3e-4,
-    gamma=0.99, tau=0.005, n_eval_episodes=10, evaluate_every=10_000):
+    gamma=0.99, tau=0.005, n_eval_episodes=10, evaluate_every=10_000, update_every=50):
         self.env_name = env_name
         self.namespace = namespace
         self.action_scale = action_scale
@@ -20,6 +20,7 @@ class SAC:
         self.tau = tau
         self.n_eval_episodes = n_eval_episodes
         self.evaluate_every = evaluate_every
+        self.update_every = update_every
     def learn(self):
         env_name = self.env_name
         TAU = self.tau
@@ -53,7 +54,7 @@ class SAC:
         buffer = ReplayBuffer(action_dim, state_dim, BUFFER_SIZE)
 
         N_TIMESTEPS = 1_000_000
-        UPDATE_EVERY = 50
+        UPDATE_EVERY = self.update_every
         EVALUATE_EVERY = self.evaluate_every
         ALPHA = self.alpha
         GAMMA = self.gamma

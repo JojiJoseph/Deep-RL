@@ -6,6 +6,7 @@ pendulum:
   tau: 0.05
   n_eval_episodes: 10
   evaluate_every: 10000
+  update_every: 1000
 
   # Working fine
 ll:

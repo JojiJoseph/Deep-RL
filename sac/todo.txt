@@ -8,6 +8,7 @@
 [] Hyperparameters
     [x] alpha
     [x] tau
-    [] n_eval_episodes
+    [x] n_eval_episodes
     [x] gamma
     [x] learning_rate
+    [x] update_every
