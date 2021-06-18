@@ -4,6 +4,7 @@ import numpy as np
 import gym
 from copy import deepcopy
 import pybullet_envs
+import csv
 
 from net import Actor, Critic
 from buffer import ReplayBuffer
@@ -73,6 +74,10 @@ class SAC:
         episodic_reward = 0
         episodes_passed = 0
 
+        # Setup the CSV
+        log_filename = f"./{self.namespace}.csv"
+        log_data = [["Episode", "End Step", "Episodic Reward"]]
+
         ep_len = 0
         highscore = -np.inf
         episode_steps = 0
@@ -95,9 +100,10 @@ class SAC:
 
             _state = next_state
             if done:
+                episodes_passed += 1
+                log_data.append([episodes_passed, timestep, episodic_reward])
                 print(f"Episode: {episodes_passed}, reward: {episodic_reward}")
                 episodic_reward = 0
-                episodes_passed += 1
                 episode_steps = 0
                 _state = env.reset()
 
@@ -180,5 +186,11 @@ class SAC:
                     print("New High (Avg) Score! Saved!")
                 print(f"highscore: {highscore}\n")
                 eval_env.close()
+
+                # Save log
+                with open(log_filename,'w',newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerows(log_data)
+
         print("\nTraining is Over!\n")
 
