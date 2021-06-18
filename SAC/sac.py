@@ -10,7 +10,8 @@ from buffer import ReplayBuffer
 
 class SAC:
     def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1, alpha=0.2, learning_rate=3e-4,
-    gamma=0.99, tau=0.005, n_eval_episodes=10, evaluate_every=10_000, update_every=50, buffer_size=10_000, n_timesteps=1_000_000):
+    gamma=0.99, tau=0.005, n_eval_episodes=10, evaluate_every=10_000, update_every=50, buffer_size=10_000, n_timesteps=1_000_000,
+    batch_size=100):
         self.env_name = env_name
         self.namespace = namespace
         self.action_scale = action_scale
@@ -23,6 +24,7 @@ class SAC:
         self.update_every = update_every
         self.buffer_size = buffer_size
         self.n_timesteps = n_timesteps
+        self.batch_size = batch_size
     def learn(self):
         env_name = self.env_name
         TAU = self.tau
@@ -52,7 +54,7 @@ class SAC:
         opt_c2  = torch.optim.Adam(critic_2.parameters(), lr=self.learning_rate)
 
         BUFFER_SIZE = self.buffer_size
-        BATCH_SIZE = 200
+        BATCH_SIZE = self.batch_size
         buffer = ReplayBuffer(action_dim, state_dim, BUFFER_SIZE)
 
         N_TIMESTEPS = self.n_timesteps
