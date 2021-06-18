@@ -14,6 +14,12 @@
     [x] update_every
     [x] buffer_size
     [x] n_timesteps
-    [] batch_size
+    [x] batch_size
+    [] Anything else?
 [x] Run evaluation only if buffer is full
-[] Save csv of returns
+[x] Save csv of returns
+[] Script to plot csv files
+    [x] Plot episodes vs score
+    [x] plot timesteps vs score
+    [] Decorate plots
+    [] Plot with smoothening

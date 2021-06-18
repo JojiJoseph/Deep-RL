@@ -4,13 +4,15 @@ import numpy as np
 import gym
 from copy import deepcopy
 import pybullet_envs
+import csv
 
 from net import Actor, Critic
 from buffer import ReplayBuffer
 
 class SAC:
     def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1, alpha=0.2, learning_rate=3e-4,
-    gamma=0.99, tau=0.005, n_eval_episodes=10, evaluate_every=10_000, update_every=50, buffer_size=10_000, n_timesteps=1_000_000):
+    gamma=0.99, tau=0.005, n_eval_episodes=10, evaluate_every=10_000, update_every=50, buffer_size=10_000, n_timesteps=1_000_000,
+    batch_size=100):
         self.env_name = env_name
         self.namespace = namespace
         self.action_scale = action_scale
@@ -23,6 +25,7 @@ class SAC:
         self.update_every = update_every
         self.buffer_size = buffer_size
         self.n_timesteps = n_timesteps
+        self.batch_size = batch_size
     def learn(self):
         env_name = self.env_name
         TAU = self.tau
@@ -52,7 +55,7 @@ class SAC:
         opt_c2  = torch.optim.Adam(critic_2.parameters(), lr=self.learning_rate)
 
         BUFFER_SIZE = self.buffer_size
-        BATCH_SIZE = 200
+        BATCH_SIZE = self.batch_size
         buffer = ReplayBuffer(action_dim, state_dim, BUFFER_SIZE)
 
         N_TIMESTEPS = self.n_timesteps
@@ -70,6 +73,10 @@ class SAC:
         total_reward = 0
         episodic_reward = 0
         episodes_passed = 0
+
+        # Setup the CSV
+        log_filename = f"./{self.namespace}.csv"
+        log_data = [["Episode", "End Step", "Episodic Reward"]]
 
         ep_len = 0
         highscore = -np.inf
@@ -93,9 +100,10 @@ class SAC:
 
             _state = next_state
             if done:
+                episodes_passed += 1
+                log_data.append([episodes_passed, timestep, episodic_reward])
                 print(f"Episode: {episodes_passed}, reward: {episodic_reward}")
                 episodic_reward = 0
-                episodes_passed += 1
                 episode_steps = 0
                 _state = env.reset()
 
@@ -178,5 +186,11 @@ class SAC:
                     print("New High (Avg) Score! Saved!")
                 print(f"highscore: {highscore}\n")
                 eval_env.close()
+
+                # Save log
+                with open(log_filename,'w',newline='') as file:
+                    writer = csv.writer(file)
+                    writer.writerows(log_data)
+
         print("\nTraining is Over!\n")
 
