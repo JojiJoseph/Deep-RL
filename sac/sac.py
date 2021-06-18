@@ -10,7 +10,7 @@ from buffer import ReplayBuffer
 
 class SAC:
     def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1, alpha=0.2, learning_rate=3e-4,
-    gamma=0.99, tau=0.005, n_eval_episodes=10, evaluate_every=10_000, update_every=50):
+    gamma=0.99, tau=0.005, n_eval_episodes=10, evaluate_every=10_000, update_every=50, buffer_size=10_000):
         self.env_name = env_name
         self.namespace = namespace
         self.action_scale = action_scale
@@ -21,6 +21,7 @@ class SAC:
         self.n_eval_episodes = n_eval_episodes
         self.evaluate_every = evaluate_every
         self.update_every = update_every
+        self.buffer_size = buffer_size
     def learn(self):
         env_name = self.env_name
         TAU = self.tau
@@ -49,7 +50,7 @@ class SAC:
         opt_c1  = torch.optim.Adam(critic_1.parameters(), lr=self.learning_rate)
         opt_c2  = torch.optim.Adam(critic_2.parameters(), lr=self.learning_rate)
 
-        BUFFER_SIZE = 10_000
+        BUFFER_SIZE = self.buffer_size
         BATCH_SIZE = 200
         buffer = ReplayBuffer(action_dim, state_dim, BUFFER_SIZE)
 
@@ -142,7 +143,7 @@ class SAC:
                             pt.data.mul_(1-TAU)
                             pt.data.add_(TAU*p.data)
             
-            if timestep % EVALUATE_EVERY == 0:
+            if timestep % EVALUATE_EVERY == 0 and timestep > BUFFER_SIZE:
                 print("\nEvaluation\n==========")
                 eval_env = gym.make(env_name)
                 total = 0

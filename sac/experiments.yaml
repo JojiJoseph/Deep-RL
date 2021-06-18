@@ -5,8 +5,9 @@ pendulum:
   gamma: 0.99
   tau: 0.05
   n_eval_episodes: 10
-  evaluate_every: 10000
+  evaluate_every: 4000
   update_every: 1000
+  buffer_size: 2000
 
   # Working fine
 ll:
