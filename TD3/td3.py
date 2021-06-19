@@ -121,7 +121,7 @@ class TD3:
                     done_batch = torch.from_numpy(done_batch).long()
 
                     with torch.no_grad():
-                        next_actions = np.clip(actor_target.get_action(next_batch) + normal.sample((1,)), -1, 1)
+                        next_actions = np.clip(actor_target.get_action(next_batch) + np.clip(normal.sample((self.batch_size,1)),-0.5,0.5), -1, 1)
                         predicted_q = torch.minimum(critic_target_1(next_batch, next_actions),critic_target_2(next_batch, next_actions))
                         target = reward_batch[:,None] + GAMMA*(1-done_batch[:,None])*(predicted_q)
 
@@ -140,7 +140,9 @@ class TD3:
 
                     # Update actor
                     actions = actor.get_action(state_batch)
-                    predicted_q = torch.minimum(critic_1(state_batch,actions).flatten(), critic_2(state_batch,actions).flatten())#.detach()
+                    # predicted_q = torch.minimum(critic_1(state_batch,actions).flatten(), critic_2(state_batch,actions).flatten())#.detach()
+                    # Why actor is updated only w.r.t q value of critic_1?
+                    predicted_q = critic_1(state_batch, actions).flatten()
                     loss = predicted_q# - ALPHA*log_prob.flatten()
                     loss = -loss.mean()
                     opt_actor.zero_grad()
@@ -148,9 +150,10 @@ class TD3:
                     opt_actor.step()
 
                     with torch.no_grad():
-                        for pt, p in zip(actor_target.parameters(), actor.parameters()):
-                            pt.data.mul_(1-TAU)
-                            pt.data.add_(TAU*p.data)
+                        if i % 2 == 0:
+                            for pt, p in zip(actor_target.parameters(), actor.parameters()):
+                                pt.data.mul_(1-TAU)
+                                pt.data.add_(TAU*p.data)
                         for pt, p in zip(critic_target_1.parameters(), critic_1.parameters()):
                             pt.data.mul_(1-TAU)
                             pt.data.add_(TAU*p.data)

@@ -19,7 +19,7 @@ class Actor(nn.Module):
         mu = self.mu(y)
         return mu
     def get_action(self, x, eval=False):
-        action = self.forward(x)
+        action = torch.tanh(self.forward(x))
         if eval:
             return action
         return action# + self.normal.sample((1,)), -1, 1)
