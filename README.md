@@ -29,5 +29,5 @@ python plot.py -e experiment_name
 | Algorithm | Usable? | TODO |
 |-----------|---------|------|
 | SAC       | Yes     |      |
-| TD3       | No      | Fix Bugs |
+| TD3       | Yes     |      |
 | DDPG      | No      |      |
