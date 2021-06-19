@@ -57,7 +57,7 @@ for episode in range(n_episodes):
         with torch.no_grad():
             state = state[None,:]
             state = torch.from_numpy(state).float()
-            action, _ = actor.get_action(state, eval=True)
+            action = actor.get_action(state, eval=True)
             action = action[0].detach().cpu().numpy()
             if not eval:
                 eval_env.render()

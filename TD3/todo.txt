@@ -1,12 +1,9 @@
 [] Save critics also
 [] Envs
     [] MountainCarContinuous
-[] Automatic alpha
-[] Try custom reparameterization trick
 [] Try more deep actor and critics
 [] Better logging
 [] Hyperparameters
-    [x] alpha
     [x] tau
     [x] n_eval_episodes
     [x] gamma
