@@ -22,3 +22,12 @@ To plot the learning curves,
 ```bash
 python plot.py -e experiment_name
 ```
+
+## Status
+
+
+| Algorithm | Usable? | TODO |
+|-----------|---------|------|
+| SAC       | Yes     |      |
+| TD3       | No      | Fix Bugs |
+| DDPG      | No      |      |

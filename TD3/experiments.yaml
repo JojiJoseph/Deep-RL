@@ -1,0 +1,32 @@
+# Working fine
+pendulum:
+  env_name: "Pendulum-v0"
+  action_scale: 2
+  gamma: 0.99
+  tau: 0.05
+  n_eval_episodes: 10
+  evaluate_every: 5000
+  update_every: 1000
+  buffer_size: 5000
+  n_timesteps: 50000
+  batch_size: 200
+
+# Working fine
+ll:
+  env_name: "LunarLanderContinuous-v2"
+
+# To be tuned
+mc:
+  env_name: "MountainCarContinuous-v0"
+
+# Wait for 500 episodes. Then magic happens.
+hc:
+  env_name: "HalfCheetahBulletEnv-v0"
+
+# To be tuned
+ant:
+  env_name: "AntBulletEnv-v0"
+
+# To be tuned
+taur:
+  env_name: "MinitaurBulletEnv-v0"
