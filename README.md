@@ -30,4 +30,4 @@ python plot.py -e experiment_name
 |-----------|---------|------|
 | SAC       | Yes     |      |
 | TD3       | Yes     |      |
-| DDPG      | No      |      |
+| DDPG      | Yes     |      |
