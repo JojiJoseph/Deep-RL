@@ -14,7 +14,7 @@ with open("./experiments.yaml") as f:
 args = parser.parse_args()
 experiment = args.exp
 
-log_filename = f"{experiment}.csv"
+log_filename = f"./results/{experiment}.csv"
 
 df = pd.read_csv(log_filename)
 
@@ -32,7 +32,7 @@ plt.show()
 plt.plot(timesteps, returns)
 plt.title("Returns vs Timesteps")
 plt.ylabel("Return")
-plt.xlabel("Episode")
+plt.xlabel("Timestep")
 plt.grid()
 plt.show()
 

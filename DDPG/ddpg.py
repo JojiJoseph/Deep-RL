@@ -67,7 +67,7 @@ class DDPG:
         episodes_passed = 0
 
         # Setup the CSV
-        log_filename = f"./{self.namespace}.csv"
+        log_filename = f"./results/{self.namespace}.csv"
         log_data = [["Episode", "End Step", "Episodic Reward"]]
 
         ep_len = 0
@@ -177,7 +177,7 @@ class DDPG:
                 print(f"Best: {best}, worst: {worst}")
                 if avg >= highscore:
                     highscore = avg
-                    torch.save(actor.state_dict(), f"./{self.namespace}.pt")
+                    torch.save(actor.state_dict(), f"./results/{self.namespace}.pt")
                     print("New High (Avg) Score! Saved!")
                 print(f"highscore: {highscore}\n")
                 eval_env.close()
