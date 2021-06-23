@@ -1,0 +1,23 @@
+[] Save critics also
+[] Envs
+    [] MountainCarContinuous
+[] Try more deep actor and critics
+[] Better logging
+[] Hyperparameters
+    [x] tau
+    [x] n_eval_episodes
+    [x] gamma
+    [x] learning_rate
+    [x] update_every
+    [x] buffer_size
+    [x] n_timesteps
+    [x] batch_size
+    [] Anything else?
+[x] Run evaluation only if buffer is full
+[x] Save csv of returns
+[] Script to plot csv files
+    [x] Plot episodes vs score
+    [x] plot timesteps vs score
+    [x] Decorate plots
+    [x] Plot with smoothening
+    [] Get better name for functions and variables used
