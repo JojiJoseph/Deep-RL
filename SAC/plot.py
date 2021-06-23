@@ -14,7 +14,7 @@ with open("./experiments.yaml") as f:
 args = parser.parse_args()
 experiment = args.exp
 
-log_filename = f"{experiment}.csv"
+log_filename = f"./results/{experiment}.csv"
 
 df = pd.read_csv(log_filename)
 
