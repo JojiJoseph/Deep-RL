@@ -1,4 +1,4 @@
-# Working fine
+# To be tuned
 pendulum:
   env_name: "Pendulum-v0"
   action_scale: 2
@@ -10,6 +10,7 @@ pendulum:
   buffer_size: 5000
   n_timesteps: 50000
   batch_size: 200
+  buffer_size: 2000
 
 # To be tuned
 ll:

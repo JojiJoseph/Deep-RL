@@ -18,7 +18,7 @@ class Actor(nn.Module):
     def forward(self, x):
         y = torch.relu(self.l1(x))
         y = torch.relu(self.l2(y))
-        mu = self.mu(y)
+        mu = torch.tanh(self.mu(y))
         return mu, self.log_std
     def get_action(self, x, eval=False):
         mu, log_std = self.forward(x)
@@ -26,7 +26,8 @@ class Actor(nn.Module):
         if eval:
             log_prob = distrib.log_prob(mu).sum(-1)
             return mu, log_prob
-        action = distrib.sample((1,))
+        action = distrib.sample((1,))[0]
+        # print(action.shape)
         log_prob = distrib.log_prob(action).sum(-1)
         return action, log_prob
 

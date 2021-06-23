@@ -79,20 +79,22 @@ class VPG:
             state = torch.from_numpy(_state[None,:]).float()
             with torch.no_grad():
                 action, _ = actor.get_action(state)
-                action  = np.clip(action, -1, 1)
+                action = action[0].detach().cpu().numpy()
+                action_clipped  = np.clip(action, -1, 1)
                 val = critic(state)[0].cpu().numpy()
-            action = action[0].detach().numpy()
-
+            # action = action[0].detach().numpy()
+            # action_clipped  = np.clip(action, -1, 1)
+            # print(action_clipped.shape, action_clipped[0].shape)
             # if timestep < BUFFER_SIZE:
             #     action = env.action_space.sample((1,))
             # print(action.shape)
-            next_state, reward, done, _ = env.step(action[0]*ACTION_SCALE)
+            next_state, reward, done, _ = env.step(action_clipped*ACTION_SCALE)
             total_reward += reward
             episodic_reward += reward
                 
             episode_steps += 1
 
-            buffer.add(_state.copy(), action.copy(), reward, next_state.copy(),not(done and episode_steps == env._max_episode_steps) and done, val)
+            buffer.add(_state.copy(), action.copy(), reward, next_state.copy(),done, val)
 
             _state = next_state
             if done:
@@ -109,7 +111,7 @@ class VPG:
                 episode_steps = 0
                 _state = env.reset()
 
-            if timestep % 1000 == 0:
+            if timestep % BUFFER_SIZE == 0:
                 buffer.calc_advatages(gamma=GAMMA)
                 for batch in buffer:
                     state_batch, action_batch, next_batch, done_batch, adv_batch, ret_batch = batch
@@ -119,8 +121,8 @@ class VPG:
                     # reward_batch = torch.from_numpy(reward_batch).float()
                     next_batch = torch.from_numpy(next_batch).float()
                     done_batch = torch.from_numpy(done_batch).long()
-                    ret_batch = torch.from_numpy(ret_batch).float()
                     adv_batch = torch.from_numpy(adv_batch).float()
+                    ret_batch = torch.from_numpy(ret_batch).float()
 
                     # Update critic
                     loss = (ret_batch.flatten().detach()- critic(state_batch).flatten())**2
@@ -165,7 +167,8 @@ class VPG:
                             state = torch.from_numpy(state).float()
                             action, _ = actor.get_action(state, eval=True)
                             action = action[0].detach().cpu().numpy()
-                            state, reward, done,_ = eval_env.step(action*ACTION_SCALE)
+                            action_clipped  = np.clip(action, -1, 1)
+                            state, reward, done,_ = eval_env.step(action_clipped*ACTION_SCALE)
                             eval_return += reward
                         if done:
                             eval_returns.append(eval_return)
