@@ -8,6 +8,7 @@ import csv
 
 from net import Actor, Critic
 from buffer import ReplayBuffer
+from logger import Logger
 
 class TD3:
     def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1, alpha=0.2, learning_rate=3e-4,
@@ -105,7 +106,13 @@ class TD3:
             if done:
                 episodes_passed += 1
                 log_data.append([episodes_passed, timestep, episodic_reward])
-                print(f"Episode: {episodes_passed}, reward: {episodic_reward}")
+
+                Logger.print_boundary()
+                Logger.print("Episode", episodes_passed)
+                Logger.print("Episodic Reward", episodic_reward)
+                Logger.print("Timesteps", timestep)
+                Logger.print_boundary()
+
                 episodic_reward = 0
                 episode_steps = 0
                 _state = env.reset()
