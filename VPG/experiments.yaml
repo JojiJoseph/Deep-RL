@@ -19,7 +19,6 @@ cartpole:
   gamma: 0.99
   n_eval_episodes: 10
   evaluate_every: 2000
-  update_every: 1000
   batch_size: 200
   lda: 0.95
   buffer_size: 2000
@@ -27,6 +26,11 @@ cartpole:
 # To be tuned
 ll:
   env_name: "LunarLanderContinuous-v2"
+  gamma: 0.99
+  n_eval_episodes: 10
+  evaluate_every: 2000
+  batch_size: 200
+  lda: 0.95
   buffer_size: 2000
 
 # To be tuned

@@ -11,7 +11,7 @@ from logger import Logger
 
 class VPG:
     def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1, learning_rate=3e-4,
-    gamma=0.99, n_eval_episodes=10, evaluate_every=10_000, update_every=50, buffer_size=10_000, n_timesteps=1_000_000,
+    gamma=0.99, n_eval_episodes=10, evaluate_every=10_000, buffer_size=10_000, n_timesteps=1_000_000,
     batch_size=100,lda=1.0):
         self.env_name = env_name
         self.namespace = namespace
@@ -20,11 +20,11 @@ class VPG:
         self.gamma = gamma
         self.n_eval_episodes = n_eval_episodes
         self.evaluate_every = evaluate_every
-        self.update_every = update_every
         self.buffer_size = buffer_size
         self.n_timesteps = n_timesteps
         self.batch_size = batch_size
         self.lda = lda
+        self.simple_log = True # Hardcoded for now
     def learn(self):
         env_name = self.env_name
 
@@ -47,13 +47,10 @@ class VPG:
         opt_actor  = torch.optim.Adam(actor.parameters(), lr=self.learning_rate)
         opt_critic  = torch.optim.Adam(critic.parameters(), lr=self.learning_rate)
 
-        BUFFER_SIZE = self.buffer_size
-        BATCH_SIZE = self.batch_size
-        buffer = RolloutBuffer(action_dim or 1, state_dim, size=BUFFER_SIZE, batch_size=BATCH_SIZE)
+
+        buffer = RolloutBuffer(action_dim or 1, state_dim, size=self.buffer_size, batch_size=self.batch_size)
 
         N_TIMESTEPS = self.n_timesteps
-        UPDATE_EVERY = self.update_every
-        EVALUATE_EVERY = self.evaluate_every
 
         ACTION_SCALE = self.action_scale
 
@@ -95,18 +92,20 @@ class VPG:
             if done:
                 episodes_passed += 1
                 log_data.append([episodes_passed, timestep, episodic_reward])
-
-                Logger.print_boundary()
-                Logger.print("Episode", episodes_passed)
-                Logger.print("Episodic Reward", episodic_reward)
-                Logger.print("Timesteps", timestep)
-                Logger.print_boundary()
+                if self.simple_log:
+                    print(f"Episode: {episodes_passed}, return: {episodic_reward}")
+                else:
+                    Logger.print_boundary()
+                    Logger.print("Episode", episodes_passed)
+                    Logger.print("Episodic Reward", episodic_reward)
+                    Logger.print("Timesteps", timestep)
+                    Logger.print_boundary()
 
                 episodic_reward = 0
                 episode_steps = 0
                 _state = env.reset()
 
-            if timestep % BUFFER_SIZE == 0:
+            if timestep % self.buffer_size == 0:
                 buffer.calc_advatages(gamma=self.gamma,lda=self.lda)
                 for batch in buffer:
                     state_batch, action_batch, next_batch, done_batch, adv_batch, ret_batch = batch
@@ -127,6 +126,7 @@ class VPG:
                     opt_critic.zero_grad()
                     loss = loss.mean()
                     loss.backward()
+                    # torch.nn.utils.clip_grad_norm_(critic.parameters(), 0.5) Leave this comment as it is
                     opt_critic.step()
 
                     # Update actor
@@ -140,11 +140,12 @@ class VPG:
                     
                     opt_actor.zero_grad()
                     loss.backward()
+                    # torch.nn.utils.clip_grad_norm_(actor.parameters(), 0.5) Leave this comment as it is
                     opt_actor.step()
 
                 buffer.clear()
             
-            if timestep % EVALUATE_EVERY == 0 and timestep > 0:
+            if timestep % self.evaluate_every == 0 and timestep > 0:
 
                 eval_env = gym.make(env_name)
                 total = 0

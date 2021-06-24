@@ -17,7 +17,7 @@ class RolloutBuffer:
 
         self.batch_size = batch_size # For now it's hardcoded
 
-        assert size % batch_size == 0
+        assert size % batch_size == 0, "Buffer size should be divisible by batch size"
 
         self.choice_from = [x for x in range(size)]
 

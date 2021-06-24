@@ -15,6 +15,10 @@ class Actor(nn.Module):
 
         self.normal = torch.distributions.Normal(0,0.1)
 
+        torch.nn.init.uniform_(self.l1.weight.data, -0.001, 0.001)
+        torch.nn.init.uniform_(self.l2.weight.data, -0.001, 0.001)
+        torch.nn.init.uniform_(self.mu.weight.data, -0.001, 0.001)
+
     def forward(self, x):
         y = torch.relu(self.l1(x))
         y = torch.relu(self.l2(y))
@@ -42,15 +46,19 @@ class ActorDiscrete(nn.Module):
         self.state_dim = state_dim
         # self.action_dim = action_dim
         self.l1 = nn.Linear(state_dim, size)
+        torch.nn.init.uniform_(self.l1.weight.data, -0.001, 0.001)
         self.l2 = nn.Linear(size, size)
+        torch.nn.init.uniform_(self.l2.weight.data, -0.001, 0.001)
 
         self.action_logits = nn.Linear(size, n_actions)
+        torch.nn.init.uniform_(self.action_logits.weight.data, -0.001, 0.001)
 
     def forward(self, x):
         y = torch.relu(self.l1(x))
         y = torch.relu(self.l2(y))
         logits = self.action_logits(y)
         return logits
+    
     def get_action(self, x, eval=False):
         logits = self.forward(x)
         distrib = torch.distributions.Categorical(logits=logits)
@@ -69,9 +77,11 @@ class Critic(nn.Module):
         self.l1 = nn.Linear(state_dim, size)
         self.l2 = nn.Linear(size, size)
         self.l3 = nn.Linear(size, 1)
+        torch.nn.init.uniform_(self.l1.weight.data, -0.001, 0.001)
+        torch.nn.init.uniform_(self.l2.weight.data, -0.001, 0.001)
+        torch.nn.init.uniform_(self.l3.weight.data, -0.001, 0.001)
+    
     def forward(self, x):
-        # x = torch.cat((s, a),dim=-1)
-
         y = torch.relu(self.l1(x))
         y = torch.relu(self.l2(y))
         y = self.l3(y)
