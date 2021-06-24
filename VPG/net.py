@@ -36,6 +36,32 @@ class Actor(nn.Module):
         distrib = torch.distributions.Normal(mu, torch.exp(log_std))
         return distrib.log_prob(action).sum(-1)
 
+class ActorDiscrete(nn.Module):
+    def __init__(self, state_dim, n_actions, size=256):
+        super().__init__()
+        self.state_dim = state_dim
+        self.action_dim = action_dim
+        self.l1 = nn.Linear(state_dim, size)
+        self.l2 = nn.Linear(size, size)
+
+        self.action_logits = nn.Linear(size, n_actions)
+
+    def forward(self, x):
+        y = torch.relu(self.l1(x))
+        y = torch.relu(self.l2(y))
+        logits = self.action_logits(y)
+        return logits
+    def get_action(self, x, eval=False):
+        logits = self.forward(x)
+        distrib = torch.distributions.Categorical(logits=logits)
+        action = distrib.sample((1,))
+        log_prob = distrib.log_prob(action)
+        return action, log_prob
+
+    def log_prob(self, action, state):
+        logits = self.forward(state)
+        distrib = torch.distributions.Categorical(logits=logits)
+        return distrib.log_prob(action)
 
 class Critic(nn.Module):
     def __init__(self, state_dim, action_dim, size=256):

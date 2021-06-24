@@ -32,7 +32,7 @@ class RolloutBuffer:
 
         self.idx+=1
         if self.idx > self.size:
-            self.idx = 1
+            self.idx = 0
 
     def get_batch(self, batch_size=128, rg=None):
         if rg is None:
@@ -48,8 +48,10 @@ class RolloutBuffer:
 
         return state_batch, action_batch, reward_batch, next_batch, done_batch
 
-    def calc_advatages(self, last_value=0,gamma=0.99, lda=1.0):
+    def calc_advatages(self, last_value=0,gamma=0.99, lda=0.95):
         n = self.idx
+        print("#",n)
+        # exit()
         prev_adv = 0
         # last_value = last_value.reshape((-1,))
         last_value = 0 # Hardcoded
@@ -70,15 +72,15 @@ class RolloutBuffer:
         
     def __next__(self):
         idx, batch_size , batch_rows= self.idx, self.batch_size, self.n_batch_rows
-        if self.idx + self.n_batch_rows<= len(self.states):
-            s,a,adv,ret = self.states[idx:idx+batch_rows],self.actions[idx:idx+batch_rows],self.advantages[idx:idx+batch_rows], self.returns[idx:idx+batch_rows]
-            self.idx+=batch_rows
+        if self.idx + self.batch_size<= len(self.states):
+            s,a,adv,ret = self.states[idx:idx+batch_size],self.actions[idx:idx+batch_size],self.advantages[idx:idx+batch_size], self.returns[idx:idx+batch_size]
+            self.idx+=batch_size
             s = s.reshape((-1,self.state_dim))
             a = a.reshape((-1,self.action_dim))
             adv = adv.reshape((-1,))
-            ret = adv.reshape((-1,))
-            d = self.dones[idx:idx+batch_rows]
-            n = self.next_states[idx:idx+batch_rows]
+            ret = ret.reshape((-1,))
+            d = self.dones[idx:idx+batch_size]
+            n = self.next_states[idx:idx+batch_size]
             # l = l.reshape((-1,))
             return s,a,n,d, adv,ret
         else:

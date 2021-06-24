@@ -36,7 +36,11 @@ class VPG:
         state_dim = env.observation_space.shape[0]
 
         # Actor and Critics
-        actor = Actor(state_dim, action_dim)
+        if type(env.action_space) == gym.spaces.Discrete:
+            n_actions = env.action_space.n
+            actor = Actor(state_dim, n_actions)
+        else:
+            actor = Actor(state_dim, action_dim)
 
         critic = Critic(state_dim, action_dim)
 
@@ -114,6 +118,7 @@ class VPG:
             if timestep % BUFFER_SIZE == 0:
                 buffer.calc_advatages(gamma=GAMMA)
                 for batch in buffer:
+                    print(batch[0].shape[0])
                     state_batch, action_batch, next_batch, done_batch, adv_batch, ret_batch = batch
                     
                     state_batch = torch.from_numpy(state_batch).float()

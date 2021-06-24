@@ -15,6 +15,7 @@ pendulum:
 # To be tuned
 ll:
   env_name: "LunarLanderContinuous-v2"
+  buffer_size: 2000
 
 # To be tuned
 mc:
