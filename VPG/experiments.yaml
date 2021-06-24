@@ -1,0 +1,50 @@
+# To be tuned
+pendulum:
+  env_name: "Pendulum-v0"
+  action_scale: 2
+  gamma: 0.99
+  tau: 0.05
+  n_eval_episodes: 10
+  evaluate_every: 5000
+  update_every: 1000
+  buffer_size: 5000
+  n_timesteps: 50000
+  batch_size: 200
+  buffer_size: 2000
+
+# Working fine
+cartpole:
+  env_name: "CartPole-v1"
+  # action_scale: 2
+  gamma: 0.99
+  n_eval_episodes: 10
+  evaluate_every: 2000
+  batch_size: 200
+  lda: 0.95
+  buffer_size: 2000
+
+# To be tuned
+ll:
+  env_name: "LunarLanderContinuous-v2"
+  gamma: 0.99
+  n_eval_episodes: 10
+  evaluate_every: 2000
+  batch_size: 200
+  lda: 0.95
+  buffer_size: 2000
+
+# To be tuned
+mc:
+  env_name: "MountainCarContinuous-v0"
+
+# To be tuned
+hc:
+  env_name: "HalfCheetahBulletEnv-v0"
+
+# To be tuned
+ant:
+  env_name: "AntBulletEnv-v0"
+
+# To be tuned
+taur:
+  env_name: "MinitaurBulletEnv-v0"

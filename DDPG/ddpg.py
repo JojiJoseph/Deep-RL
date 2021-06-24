@@ -148,7 +148,7 @@ class DDPG:
                             pt.data.add_(TAU*p.data)
             
             if timestep % EVALUATE_EVERY == 0 and timestep > BUFFER_SIZE:
-                print("\nEvaluation\n==========")
+                # print("\nEvaluation\n==========")
                 eval_env = gym.make(env_name)
                 total = 0
                 eval_returns = []
@@ -171,10 +171,17 @@ class DDPG:
                 std = np.std(eval_returns)
                 best = np.max(eval_returns)
                 worst = np.min(eval_returns)
-                print(f"Eval Episodes: {self.n_eval_episodes}")
-                print(f"Avg: {avg}")
-                print(f"Std: {std}")
-                print(f"Best: {best}, worst: {worst}")
+
+                Logger.print_boundary()
+                Logger.print_title("Evaluation")
+                Logger.print_double_boundary()
+                Logger.print("Eval Episodes", self.n_eval_episodes)
+                Logger.print("Avg", avg)
+                Logger.print("Std", std)
+                Logger.print("Best", best)
+                Logger.print("Worst", worst)
+                Logger.print_boundary()
+
                 if avg >= highscore:
                     highscore = avg
                     torch.save(actor.state_dict(), f"./results/{self.namespace}.pt")

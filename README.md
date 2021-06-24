@@ -26,8 +26,9 @@ python plot.py -e experiment_name
 ## Status
 
 
-| Algorithm | Usable? | TODO |
-|-----------|---------|------|
-| SAC       | Yes     |      |
-| TD3       | Yes     |      |
-| DDPG      | Yes     |      |
+| Algorithm | Usable?        | TODO                            |
+| --------- | -------------- | ------------------------------- |
+| SAC       | Yes            |                                 |
+| TD3       | Yes            |                                 |
+| DDPG      | Yes            |                                 |
+| VPG       | Yes (Discrete) | Test on continuous action space |
