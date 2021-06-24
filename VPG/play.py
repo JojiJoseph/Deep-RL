@@ -24,7 +24,7 @@ hyperparams = experiments[experiment]
 fps = 60
 
 if not eval:
-    eval_env = Monitor(gym.make(hyperparams['env_name']), './video/{}_{}'.format(experiment,time.time()), force=True)
+    eval_env = Monitor(gym.make(hyperparams['env_name']), './results/video/{}_{}'.format(experiment,time.time()), force=True)
 else:
     eval_env = gym.make(hyperparams['env_name'])
 
@@ -44,7 +44,7 @@ else:
     actor = Actor(state_dim, action_dim)
 
 
-actor.load_state_dict(torch.load(f"./{experiment}.pt"))
+actor.load_state_dict(torch.load(f"./results/{experiment}.pt"))
 try:
     if not eval:
         eval_env.render()
