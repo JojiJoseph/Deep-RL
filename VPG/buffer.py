@@ -1,7 +1,7 @@
 import numpy as np
 
 class RolloutBuffer:
-    def __init__(self, action_dim, state_dim, size=10_000):
+    def __init__(self, action_dim, state_dim, size=10_000, batch_size=100):
         self.idx = 0
         self.action_dim = action_dim
         self.state_dim = state_dim
@@ -15,8 +15,9 @@ class RolloutBuffer:
         self.returns = np.zeros((size,))
         self.values = np.zeros((size,))
 
-        self.batch_size = 100 # For now it's hardcoded
-        self.n_batch_rows = size // self.batch_size
+        self.batch_size = batch_size # For now it's hardcoded
+
+        assert size % batch_size == 0
 
         self.choice_from = [x for x in range(size)]
 
@@ -50,8 +51,6 @@ class RolloutBuffer:
 
     def calc_advatages(self, last_value=0,gamma=0.99, lda=0.95):
         n = self.idx
-        print("#",n)
-        # exit()
         prev_adv = 0
         # last_value = last_value.reshape((-1,))
         last_value = 0 # Hardcoded
@@ -71,7 +70,7 @@ class RolloutBuffer:
         return self
         
     def __next__(self):
-        idx, batch_size , batch_rows= self.idx, self.batch_size, self.n_batch_rows
+        idx, batch_size = self.idx, self.batch_size
         if self.idx + self.batch_size<= len(self.states):
             s,a,adv,ret = self.states[idx:idx+batch_size],self.actions[idx:idx+batch_size],self.advantages[idx:idx+batch_size], self.returns[idx:idx+batch_size]
             self.idx+=batch_size

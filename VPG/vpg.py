@@ -2,41 +2,39 @@ import torch
 import torch.nn as nn
 import numpy as np
 import gym
-from copy import deepcopy
 import pybullet_envs
 import csv
 
-from net import Actor, Critic, ActorDiscrete
+from net import Actor,ActorDiscrete,Critic
 from buffer import RolloutBuffer
 from logger import Logger
 
 class VPG:
-    def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1, alpha=0.2, learning_rate=3e-4,
-    gamma=0.99, tau=0.005, n_eval_episodes=10, evaluate_every=10_000, update_every=50, buffer_size=10_000, n_timesteps=1_000_000,
-    batch_size=100):
+    def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1, learning_rate=3e-4,
+    gamma=0.99, n_eval_episodes=10, evaluate_every=10_000, update_every=50, buffer_size=10_000, n_timesteps=1_000_000,
+    batch_size=100,lda=1.0):
         self.env_name = env_name
         self.namespace = namespace
         self.action_scale = action_scale
-        self.alpha = alpha
         self.learning_rate = learning_rate
         self.gamma = gamma
-        self.tau = tau
         self.n_eval_episodes = n_eval_episodes
         self.evaluate_every = evaluate_every
         self.update_every = update_every
         self.buffer_size = buffer_size
         self.n_timesteps = n_timesteps
         self.batch_size = batch_size
+        self.lda = lda
     def learn(self):
         env_name = self.env_name
-        TAU = self.tau
+
         env = gym.make(env_name)
 
         state_dim = env.observation_space.shape[0]
         action_dim = None
         n_actions = None
 
-        # Actor and Critics
+        # Actor and Critic
         if type(env.action_space) == gym.spaces.Discrete:
             n_actions = env.action_space.n
             actor = ActorDiscrete(state_dim, n_actions)
@@ -45,28 +43,22 @@ class VPG:
             actor = Actor(state_dim, action_dim)
 
         critic = Critic(state_dim, None)
-
-        actor_target = deepcopy(actor)
-        critic_target = deepcopy(critic)
         
         opt_actor  = torch.optim.Adam(actor.parameters(), lr=self.learning_rate)
         opt_critic  = torch.optim.Adam(critic.parameters(), lr=self.learning_rate)
 
         BUFFER_SIZE = self.buffer_size
         BATCH_SIZE = self.batch_size
-        buffer = RolloutBuffer(action_dim or 1, state_dim, BUFFER_SIZE)
+        buffer = RolloutBuffer(action_dim or 1, state_dim, size=BUFFER_SIZE, batch_size=BATCH_SIZE)
 
         N_TIMESTEPS = self.n_timesteps
         UPDATE_EVERY = self.update_every
         EVALUATE_EVERY = self.evaluate_every
-        ALPHA = self.alpha
-        GAMMA = self.gamma
 
         ACTION_SCALE = self.action_scale
 
         timestep = 0
 
-        env.seed(0)
         _state = env.reset()
         total_reward = 0
         episodic_reward = 0
@@ -85,19 +77,12 @@ class VPG:
             state = torch.from_numpy(_state[None,:]).float()
             with torch.no_grad():
                 action, _ = actor.get_action(state)
-                # print(action)
                 action = action[0].detach().cpu().numpy()
-                # action_clipped  = np.clip(action, -1, 1)
                 val = critic(state)[0].cpu().numpy()
-            # action = action[0].detach().numpy()
             if type(env.action_space) == gym.spaces.Discrete:
                 action_clipped = action[0]
             else:
                 action_clipped  = np.clip(action, -1, 1)
-            # print(action_clipped.shape, action_clipped[0].shape)
-            # if timestep < BUFFER_SIZE:
-            #     action = env.action_space.sample((1,))
-            # print(action.shape)
             next_state, reward, done, _ = env.step(action_clipped*ACTION_SCALE)
             total_reward += reward
             episodic_reward += reward
@@ -122,9 +107,8 @@ class VPG:
                 _state = env.reset()
 
             if timestep % BUFFER_SIZE == 0:
-                buffer.calc_advatages(gamma=GAMMA)
+                buffer.calc_advatages(gamma=self.gamma,lda=self.lda)
                 for batch in buffer:
-                    print(batch[0].shape[0])
                     state_batch, action_batch, next_batch, done_batch, adv_batch, ret_batch = batch
                     
                     state_batch = torch.from_numpy(state_batch).float()
@@ -132,7 +116,7 @@ class VPG:
                         action_batch = torch.from_numpy(action_batch).long()
                     else:
                         action_batch = torch.from_numpy(action_batch).float()
-                    # reward_batch = torch.from_numpy(reward_batch).float()
+
                     next_batch = torch.from_numpy(next_batch).float()
                     done_batch = torch.from_numpy(done_batch).long()
                     adv_batch = torch.from_numpy(adv_batch).float()
@@ -146,28 +130,22 @@ class VPG:
                     opt_critic.step()
 
                     # Update actor
-                    # actions, log_prob = actor.get_action(state_batch)
                     log_prob = actor.log_prob(action_batch, state_batch)
+
+                    # Normalize advantages
                     adv_batch = (adv_batch - adv_batch.mean())/(adv_batch.std() + 1e-9)
-                    # print(log_prob.shape, adv_batch.shape)
-                    loss = log_prob * adv_batch
+                    
+                    loss =  log_prob * adv_batch
                     loss = -loss.mean()
+                    
                     opt_actor.zero_grad()
                     loss.backward()
                     opt_actor.step()
 
-                    # with torch.no_grad():
-                    #     if i % 2 == 0:
-                    #         for pt, p in zip(actor_target.parameters(), actor.parameters()):
-                    #             pt.data.mul_(1-TAU)
-                    #             pt.data.add_(TAU*p.data)
-                    #     for pt, p in zip(critic_target.parameters(), critic.parameters()):
-                    #         pt.data.mul_(1-TAU)
-                    #         pt.data.add_(TAU*p.data)
                 buffer.clear()
             
-            if timestep % 2000 == 0 and timestep > 1000:
-                # print("\nEvaluation\n==========")
+            if timestep % EVALUATE_EVERY == 0 and timestep > 0:
+
                 eval_env = gym.make(env_name)
                 total = 0
                 eval_returns = []
@@ -185,7 +163,6 @@ class VPG:
                                 action_clipped = action[0]
                             else:
                                 action_clipped  = np.clip(action, -1, 1)
-                            # action_clipped  = np.clip(action, -1, 1)
                             state, reward, done,_ = eval_env.step(action_clipped*ACTION_SCALE)
                             eval_return += reward
                         if done:
