@@ -12,7 +12,7 @@ pendulum:
   batch_size: 200
   buffer_size: 2000
 
-# To be tuned
+# Working fine
 cartpole:
   env_name: "CartPole-v1"
   # action_scale: 2

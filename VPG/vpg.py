@@ -57,7 +57,7 @@ class VPG:
         timestep = 0
 
         _state = env.reset()
-        total_reward = 0
+
         episodic_reward = 0
         episodes_passed = 0
 
@@ -65,10 +65,9 @@ class VPG:
         log_filename = f"./results/{self.namespace}.csv"
         log_data = [["Episode", "End Step", "Episodic Reward"]]
 
-        ep_len = 0
         highscore = -np.inf
         episode_steps = 0
-        normal = torch.distributions.Normal(0,0.1)
+
         while timestep < N_TIMESTEPS:
             timestep += 1
             state = torch.from_numpy(_state[None,:]).float()
@@ -81,7 +80,7 @@ class VPG:
             else:
                 action_clipped  = np.clip(action, -1, 1)
             next_state, reward, done, _ = env.step(action_clipped*ACTION_SCALE)
-            total_reward += reward
+
             episodic_reward += reward
                 
             episode_steps += 1
@@ -93,7 +92,7 @@ class VPG:
                 episodes_passed += 1
                 log_data.append([episodes_passed, timestep, episodic_reward])
                 if self.simple_log:
-                    print(f"Episode: {episodes_passed}, return: {episodic_reward}")
+                    print(f"Episode: {episodes_passed}, return: {episodic_reward}, timesteps elapsed: {timestep}")
                 else:
                     Logger.print_boundary()
                     Logger.print("Episode", episodes_passed)
@@ -126,7 +125,7 @@ class VPG:
                     opt_critic.zero_grad()
                     loss = loss.mean()
                     loss.backward()
-                    # torch.nn.utils.clip_grad_norm_(critic.parameters(), 0.5) Leave this comment as it is
+                    torch.nn.utils.clip_grad_norm_(critic.parameters(), 0.5) # Leave this comment as it is
                     opt_critic.step()
 
                     # Update actor
@@ -140,7 +139,7 @@ class VPG:
                     
                     opt_actor.zero_grad()
                     loss.backward()
-                    # torch.nn.utils.clip_grad_norm_(actor.parameters(), 0.5) Leave this comment as it is
+                    torch.nn.utils.clip_grad_norm_(actor.parameters(), 0.5) # Leave this comment as it is
                     opt_actor.step()
 
                 buffer.clear()
@@ -148,7 +147,7 @@ class VPG:
             if timestep % self.evaluate_every == 0 and timestep > 0:
 
                 eval_env = gym.make(env_name)
-                total = 0
+
                 eval_returns = []
                 for episode in range(self.n_eval_episodes):
                     state = eval_env.reset()
@@ -169,26 +168,26 @@ class VPG:
                         if done:
                             eval_returns.append(eval_return)
 
-                avg = np.mean(eval_returns)
-                std = np.std(eval_returns)
-                best = np.max(eval_returns)
-                worst = np.min(eval_returns)
+                eval_avg = np.mean(eval_returns)
+                eval_std = np.std(eval_returns)
+                eval_best = np.max(eval_returns)
+                eval_worst = np.min(eval_returns)
 
                 Logger.print_boundary()
                 Logger.print_title("Evaluation")
                 Logger.print_double_boundary()
                 Logger.print("Eval Episodes", self.n_eval_episodes)
-                Logger.print("Avg", avg)
-                Logger.print("Std", std)
-                Logger.print("Best", best)
-                Logger.print("Worst", worst)
+                Logger.print("Avg", eval_avg)
+                Logger.print("Std", eval_std)
+                Logger.print("Best", eval_best)
+                Logger.print("Worst", eval_worst)
                 Logger.print_boundary()
 
-                if avg >= highscore:
-                    highscore = avg
+                if eval_avg >= highscore:
+                    highscore = eval_avg
                     torch.save(actor.state_dict(), f"./results/{self.namespace}.pt")
                     print("New High (Avg) Score! Saved!")
-                print(f"highscore: {highscore}\n")
+                print(f"highscore (Avg. of eval trials): {highscore}\n")
                 eval_env.close()
 
                 # Save log
