@@ -6,6 +6,10 @@ class RolloutBuffer:
         self.action_dim = action_dim
         self.state_dim = state_dim
         self.size = size
+        self.batch_size = batch_size
+
+        assert size % batch_size == 0, "Buffer size should be divisible by batch size"
+        
         self.states = np.zeros([size,state_dim])
         self.actions = np.zeros([size, action_dim])
         self.rewards = np.zeros((size,))
@@ -14,12 +18,6 @@ class RolloutBuffer:
         self.advantages = np.zeros((size,))
         self.returns = np.zeros((size,))
         self.values = np.zeros((size,))
-
-        self.batch_size = batch_size # For now it's hardcoded
-
-        assert size % batch_size == 0, "Buffer size should be divisible by batch size"
-
-        self.choice_from = [x for x in range(size)]
 
     def add(self, state, action, reward, next_state, done, val):
         idx = self.idx
@@ -35,25 +33,9 @@ class RolloutBuffer:
         if self.idx > self.size:
             self.idx = 0
 
-    def get_batch(self, batch_size=128, rg=None):
-        if rg is None:
-            indices = np.random.choice(self.choice_from, batch_size)
-        else:
-            indices = np.random.choice(self.choice_from[:rg], batch_size)
-
-        state_batch = self.states[indices]
-        action_batch = self.actions[indices]
-        reward_batch = self.rewards[indices]
-        next_batch = self.next_states[indices]
-        done_batch = self.dones[indices]
-
-        return state_batch, action_batch, reward_batch, next_batch, done_batch
-
     def calc_advatages(self, last_value=0,gamma=0.99, lda=0.95):
         n = self.idx
-        prev_adv = 0
-        # last_value = last_value.reshape((-1,))
-        last_value = 0 # Hardcoded
+        prev_adv = 0 # Hardcoded
         for i in range(n-1,-1,-1):
             delta = self.rewards[i] + gamma*last_value*(1-self.dones[i]) - self.values[i]
             adv = delta + lda*gamma*(1-self.dones[i])*prev_adv
@@ -72,15 +54,19 @@ class RolloutBuffer:
     def __next__(self):
         idx, batch_size = self.idx, self.batch_size
         if self.idx + self.batch_size<= len(self.states):
-            s,a,adv,ret = self.states[idx:idx+batch_size],self.actions[idx:idx+batch_size],self.advantages[idx:idx+batch_size], self.returns[idx:idx+batch_size]
+            state_batch = self.states[idx:idx+batch_size]
+            action_batch = self.actions[idx:idx+batch_size]
+            adv_batch = self.advantages[idx:idx+batch_size]
+            ret_batch = self.returns[idx:idx+batch_size]
+            done_batch = self.dones[idx:idx+batch_size]
+            next_batch = self.next_states[idx:idx+batch_size]
+            
+            state_batch = state_batch.reshape((-1,self.state_dim))
+            action_batch = action_batch.reshape((-1,self.action_dim))
+            adv_batch = adv_batch.reshape((-1,))
+            ret_batch = ret_batch.reshape((-1,))
             self.idx+=batch_size
-            s = s.reshape((-1,self.state_dim))
-            a = a.reshape((-1,self.action_dim))
-            adv = adv.reshape((-1,))
-            ret = ret.reshape((-1,))
-            d = self.dones[idx:idx+batch_size]
-            n = self.next_states[idx:idx+batch_size]
-            # l = l.reshape((-1,))
-            return s,a,n,d, adv,ret
+
+            return state_batch,action_batch,next_batch,done_batch, adv_batch,ret_batch
         else:
             raise StopIteration

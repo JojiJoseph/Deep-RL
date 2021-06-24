@@ -85,7 +85,7 @@ class VPG:
                 
             episode_steps += 1
 
-            buffer.add(_state.copy(), action.copy(), reward, next_state.copy(),done, val)
+            buffer.add(_state.copy(), action.copy(), reward, next_state.copy(),not(done and episode_steps == env._max_episode_steps) and done, val)
 
             _state = next_state
             if done:
@@ -104,8 +104,11 @@ class VPG:
                 episode_steps = 0
                 _state = env.reset()
 
+            done = not(done and episode_steps == env._max_episode_steps) and done
+
             if timestep % self.buffer_size == 0:
-                buffer.calc_advatages(gamma=self.gamma,lda=self.lda)
+                val = 0 if done else critic(torch.from_numpy(_state[:]).float())[0].detach().cpu().numpy().item()
+                buffer.calc_advatages(gamma=self.gamma,lda=self.lda, last_value=val)
                 for batch in buffer:
                     state_batch, action_batch, next_batch, done_batch, adv_batch, ret_batch = batch
                     
