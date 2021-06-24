@@ -8,7 +8,7 @@ import argparse
 import yaml
 from gym.wrappers import Monitor
 
-from net import Actor
+from net import Actor, ActorDiscrete
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-e","--exp",type=str, required=True,help="The experiment name as defined in the yaml file")
@@ -34,9 +34,15 @@ else:
     ACTION_SCALE = 1
 
 state_dim = eval_env.observation_space.shape[0]
-action_dim = eval_env.action_space.shape[0]
+n_actions = None
+action_dim = None
+if type(eval_env.action_space) == gym.spaces.Discrete:
+    n_actions = eval_env.action_space.n
+    actor = ActorDiscrete(state_dim, n_actions)
+else:
+    action_dim = eval_env.action_space.shape[0]
+    actor = Actor(state_dim, action_dim)
 
-actor = Actor(state_dim, action_dim)
 
 actor.load_state_dict(torch.load(f"./{experiment}.pt"))
 try:
@@ -57,12 +63,16 @@ for episode in range(n_episodes):
         with torch.no_grad():
             state = state[None,:]
             state = torch.from_numpy(state).float()
-            action = actor.get_action(state, eval=True)
+            action, _ = actor.get_action(state, eval=True)
             action = action[0].detach().cpu().numpy()
+            if type(eval_env.action_space) == gym.spaces.Discrete:
+                action_clipped = action[0]
+            else:
+                action_clipped  = np.clip(action, -1, 1)
             if not eval:
                 eval_env.render()
                 time.sleep(1/fps)
-            state, reward, done,_ = eval_env.step(action*ACTION_SCALE)
+            state, reward, done,_ = eval_env.step(action_clipped*ACTION_SCALE)
             total_return += reward
     returns.append(total_return)
     print(f"Episode: {episode+1}, Return: {total_return}")

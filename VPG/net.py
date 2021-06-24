@@ -40,7 +40,7 @@ class ActorDiscrete(nn.Module):
     def __init__(self, state_dim, n_actions, size=256):
         super().__init__()
         self.state_dim = state_dim
-        self.action_dim = action_dim
+        # self.action_dim = action_dim
         self.l1 = nn.Linear(state_dim, size)
         self.l2 = nn.Linear(size, size)
 

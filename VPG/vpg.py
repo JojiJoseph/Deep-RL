@@ -6,7 +6,7 @@ from copy import deepcopy
 import pybullet_envs
 import csv
 
-from net import Actor, Critic
+from net import Actor, Critic, ActorDiscrete
 from buffer import RolloutBuffer
 from logger import Logger
 
@@ -32,17 +32,19 @@ class VPG:
         TAU = self.tau
         env = gym.make(env_name)
 
-        action_dim = env.action_space.shape[0]
         state_dim = env.observation_space.shape[0]
+        action_dim = None
+        n_actions = None
 
         # Actor and Critics
         if type(env.action_space) == gym.spaces.Discrete:
             n_actions = env.action_space.n
-            actor = Actor(state_dim, n_actions)
+            actor = ActorDiscrete(state_dim, n_actions)
         else:
+            action_dim = env.action_space.shape[0]
             actor = Actor(state_dim, action_dim)
 
-        critic = Critic(state_dim, action_dim)
+        critic = Critic(state_dim, None)
 
         actor_target = deepcopy(actor)
         critic_target = deepcopy(critic)
@@ -52,7 +54,7 @@ class VPG:
 
         BUFFER_SIZE = self.buffer_size
         BATCH_SIZE = self.batch_size
-        buffer = RolloutBuffer(action_dim, state_dim, BUFFER_SIZE)
+        buffer = RolloutBuffer(action_dim or 1, state_dim, BUFFER_SIZE)
 
         N_TIMESTEPS = self.n_timesteps
         UPDATE_EVERY = self.update_every
@@ -83,11 +85,15 @@ class VPG:
             state = torch.from_numpy(_state[None,:]).float()
             with torch.no_grad():
                 action, _ = actor.get_action(state)
+                # print(action)
                 action = action[0].detach().cpu().numpy()
-                action_clipped  = np.clip(action, -1, 1)
+                # action_clipped  = np.clip(action, -1, 1)
                 val = critic(state)[0].cpu().numpy()
             # action = action[0].detach().numpy()
-            # action_clipped  = np.clip(action, -1, 1)
+            if type(env.action_space) == gym.spaces.Discrete:
+                action_clipped = action[0]
+            else:
+                action_clipped  = np.clip(action, -1, 1)
             # print(action_clipped.shape, action_clipped[0].shape)
             # if timestep < BUFFER_SIZE:
             #     action = env.action_space.sample((1,))
@@ -122,7 +128,10 @@ class VPG:
                     state_batch, action_batch, next_batch, done_batch, adv_batch, ret_batch = batch
                     
                     state_batch = torch.from_numpy(state_batch).float()
-                    action_batch = torch.from_numpy(action_batch).float()
+                    if type(env.action_space) == gym.spaces.Discrete:
+                        action_batch = torch.from_numpy(action_batch).long()
+                    else:
+                        action_batch = torch.from_numpy(action_batch).float()
                     # reward_batch = torch.from_numpy(reward_batch).float()
                     next_batch = torch.from_numpy(next_batch).float()
                     done_batch = torch.from_numpy(done_batch).long()
@@ -172,7 +181,11 @@ class VPG:
                             state = torch.from_numpy(state).float()
                             action, _ = actor.get_action(state, eval=True)
                             action = action[0].detach().cpu().numpy()
-                            action_clipped  = np.clip(action, -1, 1)
+                            if type(env.action_space) == gym.spaces.Discrete:
+                                action_clipped = action[0]
+                            else:
+                                action_clipped  = np.clip(action, -1, 1)
+                            # action_clipped  = np.clip(action, -1, 1)
                             state, reward, done,_ = eval_env.step(action_clipped*ACTION_SCALE)
                             eval_return += reward
                         if done:
