@@ -53,7 +53,6 @@ except:
 
 n_episodes = 100 if eval else 1
 
-
 returns = []
 for episode in range(n_episodes):
     state = eval_env.reset()
