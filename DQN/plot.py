@@ -32,7 +32,7 @@ plt.show()
 plt.plot(timesteps, returns)
 plt.title("Returns vs Timesteps")
 plt.ylabel("Return")
-plt.xlabel("Episode")
+plt.xlabel("Timestep")
 plt.grid()
 plt.show()
 

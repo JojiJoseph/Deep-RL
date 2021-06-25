@@ -75,14 +75,10 @@ class DQN:
             state = torch.from_numpy(_state[None,:]).float()
             with torch.no_grad():
                 action = agent.get_action(state)
-                # print(action)
-                # action  = np.clip(actor.get_action(state) + normal.sample((1,)), -1, 1)
             action = action[0].detach().numpy()
             if np.random.random() < 0.2:
                 action = env.action_space.sample()
 
-            # if timestep < BUFFER_SIZE:
-            #     action = env.action_space.sample()
             next_state, reward, done, _ = env.step(action)
             total_reward += reward
             episodic_reward += reward
@@ -117,46 +113,22 @@ class DQN:
                     done_batch = torch.from_numpy(done_batch).long()
 
                     with torch.no_grad():
-                        target = reward_batch[:,None] + GAMMA*(1-done_batch[:,None])*torch.max(agent_target(state_batch))
-                    # print(target.shape)
-                    # Update critics
+                        max_values, _ = torch.max(agent_target(next_batch), dim=-1, keepdim=True)
+                        target = reward_batch[:,None] + GAMMA*(1-done_batch[:,None])*max_values
+
                     with torch.no_grad():
-                        next_actions = torch.argmax(agent(state_batch),axis=-1)
-                    # print(next_actions)
-                    loss = (target- agent(state_batch)*torch.eye(n_actions)[next_actions])**2
+                        next_actions = torch.argmax(agent(state_batch),dim=-1)
+  
+                    s = torch.sum(agent(state_batch)*(torch.eye(n_actions)[action_batch.flatten()]),dim=-1,keepdim=True)
+ 
+                    loss = (target- s)**2
                     optim.zero_grad()
                     loss = loss.mean()
                     loss.backward()
+
                     optim.step()
 
-                    # loss = (target.flatten().detach()- critic_2(state_batch,action_batch).flatten())**2
-                    # loss = loss.mean()
-                    # opt_c2.zero_grad()
-                    # loss.backward()
-                    # opt_c2.step()
 
-                    # Update actor
-                    # actions = actor.get_action(state_batch)
-                    # # predicted_q = torch.minimum(critic_1(state_batch,actions).flatten(), critic_2(state_batch,actions).flatten())#.detach()
-                    # # Why actor is updated only w.r.t q value of critic_1?
-                    # predicted_q = critic_1(state_batch, actions).flatten()
-                    # loss = predicted_q# - ALPHA*log_prob.flatten()
-                    # loss = -loss.mean()
-                    # opt_actor.zero_grad()
-                    # loss.backward()
-                    # opt_actor.step()
-
-                    # with torch.no_grad():
-                    #     # if i % 2 == 0:
-                    #     #     for pt, p in zip(actor_target.parameters(), actor.parameters()):
-                    #     #         pt.data.mul_(1-TAU)
-                    #     #         pt.data.add_(TAU*p.data)
-                    #     for pt, p in zip(agent_target.parameters(), agent.parameters()):
-                    #         pt.data.mul_(1-TAU)
-                    #         pt.data.add_(TAU*p.data)
-                        # for pt, p in zip(critic_target_2.parameters(), critic_2.parameters()):
-                        #     pt.data.mul_(1-TAU)
-                        #     pt.data.add_(TAU*p.data)
             if timestep % (10*UPDATE_EVERY) == 0 and timestep > BUFFER_SIZE:
                 agent_target.load_state_dict(agent.state_dict())
             if timestep % EVALUATE_EVERY == 0 and timestep > BUFFER_SIZE:

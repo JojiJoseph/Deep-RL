@@ -8,7 +8,7 @@ import argparse
 import yaml
 from gym.wrappers import Monitor
 
-from net import Actor, ActorDiscrete
+from net import Net
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-e","--exp",type=str, required=True,help="The experiment name as defined in the yaml file")
@@ -38,7 +38,7 @@ n_actions = None
 action_dim = None
 if type(eval_env.action_space) == gym.spaces.Discrete:
     n_actions = eval_env.action_space.n
-    actor = ActorDiscrete(state_dim, n_actions)
+    actor = Net(state_dim, n_actions)
 else:
     action_dim = eval_env.action_space.shape[0]
     actor = Actor(state_dim, action_dim)
@@ -63,10 +63,10 @@ for episode in range(n_episodes):
         with torch.no_grad():
             state = state[None,:]
             state = torch.from_numpy(state).float()
-            action, _ = actor.get_action(state, eval=True)
+            action = actor.get_action(state, eval=True)
             action = action[0].detach().cpu().numpy()
             if type(eval_env.action_space) == gym.spaces.Discrete:
-                action_clipped = action[0]
+                action_clipped = action
             else:
                 action_clipped  = np.clip(action, -1, 1)
             if not eval:
