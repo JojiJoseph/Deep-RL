@@ -1,0 +1,18 @@
+# Working fine
+cartpole:
+  env_name: "CartPole-v1"
+  # action_scale: 2
+  gamma: 0.99
+  n_eval_episodes: 10
+  evaluate_every: 2000
+  batch_size: 200
+  buffer_size: 2000
+
+# Working fine
+lld:
+  env_name: "LunarLander-v2"
+  gamma: 0.99
+  n_eval_episodes: 10
+  evaluate_every: 2000
+  batch_size: 200
+  buffer_size: 2000
