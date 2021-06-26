@@ -122,8 +122,7 @@ class DDPG:
                     # Update actor
                     actions = actor.get_action(state_batch)
                     predicted_q = critic(state_batch, actions).flatten()
-                    loss = predicted_q
-                    loss = -loss.mean()
+                    loss = -predicted_q.mean()
                     opt_actor.zero_grad()
                     loss.backward()
                     opt_actor.step()
@@ -140,7 +139,7 @@ class DDPG:
             if timestep % self.evaluate_every == 0 and timestep > self.buffer_size:
 
                 eval_env = gym.make(env_name)
-                total = 0
+
                 eval_returns = []
                 for episode in range(self.n_eval_episodes):
                     state = eval_env.reset()
