@@ -11,13 +11,12 @@ from buffer import ReplayBuffer
 from logger import Logger
 
 class DDPG:
-    def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1, alpha=0.2, learning_rate=3e-4,
+    def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1, learning_rate=3e-4,
     gamma=0.99, tau=0.005, n_eval_episodes=10, evaluate_every=10_000, update_every=50, buffer_size=10_000, n_timesteps=1_000_000,
     batch_size=100):
         self.env_name = env_name
         self.namespace = namespace
         self.action_scale = action_scale
-        self.alpha = alpha
         self.learning_rate = learning_rate
         self.gamma = gamma
         self.tau = tau
@@ -28,9 +27,9 @@ class DDPG:
         self.n_timesteps = n_timesteps
         self.batch_size = batch_size
         self.simple_log = True # Hardcoded for now
+    
     def learn(self):
         env_name = self.env_name
-
         env = gym.make(env_name)
 
         action_dim = env.action_space.shape[0]
@@ -38,7 +37,6 @@ class DDPG:
 
         # Actor and Critics
         actor = Actor(state_dim, action_dim)
-
         critic = Critic(state_dim, action_dim)
 
         actor_target = deepcopy(actor)
@@ -48,11 +46,6 @@ class DDPG:
         opt_critic  = torch.optim.Adam(critic.parameters(), lr=self.learning_rate)
 
         buffer = ReplayBuffer(action_dim, state_dim, self.buffer_size)
-
-
-
-
-
 
         timestep = 0
 
@@ -65,16 +58,16 @@ class DDPG:
         log_filename = f"./results/{self.namespace}.csv"
         log_data = [["Episode", "End Step", "Episodic Reward"]]
 
-        ep_len = 0
         highscore = -np.inf
         episode_steps = 0
         normal = torch.distributions.Normal(0,0.1)
+
         while timestep < self.n_timesteps:
             timestep += 1
             state = torch.from_numpy(_state[None,:]).float()
             with torch.no_grad():
                 action = actor.get_action(state)
-                action  = np.clip(actor.get_action(state) + normal.sample((1,)), -1, 1)
+                action = np.clip(actor.get_action(state) + normal.sample((1,)), -1, 1)
             action = action[0].detach().numpy()
 
             if timestep < self.buffer_size:
@@ -105,7 +98,7 @@ class DDPG:
                 _state = env.reset()
 
             if timestep % self.update_every == 0 and timestep > self.buffer_size:
-                for i in range(self.update_every):
+                for batch_idx in range(self.update_every):
                     state_batch, action_batch, reward_batch, next_batch, done_batch = buffer.get_batch(self.batch_size)
                     
                     state_batch = torch.from_numpy(state_batch).float()
@@ -136,7 +129,7 @@ class DDPG:
                     opt_actor.step()
 
                     with torch.no_grad():
-                        if i % 2 == 0:
+                        if batch_idx % 2 == 0:
                             for pt, p in zip(actor_target.parameters(), actor.parameters()):
                                 pt.data.mul_(1-self.tau)
                                 pt.data.add_(self.tau*p.data)
