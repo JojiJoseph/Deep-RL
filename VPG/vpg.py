@@ -50,9 +50,9 @@ class VPG:
 
         buffer = RolloutBuffer(action_dim or 1, state_dim, size=self.buffer_size, batch_size=self.batch_size)
 
-        N_TIMESTEPS = self.n_timesteps
 
-        ACTION_SCALE = self.action_scale
+
+
 
         timestep = 0
 
@@ -68,7 +68,7 @@ class VPG:
         highscore = -np.inf
         episode_steps = 0
 
-        while timestep < N_TIMESTEPS:
+        while timestep < self.n_timesteps:
             timestep += 1
             state = torch.from_numpy(_state[None,:]).float()
             with torch.no_grad():
@@ -79,7 +79,7 @@ class VPG:
                 action_clipped = action[0]
             else:
                 action_clipped  = np.clip(action, -1, 1)
-            next_state, reward, done, _ = env.step(action_clipped*ACTION_SCALE)
+            next_state, reward, done, _ = env.step(action_clipped*self.action_scale)
 
             episodic_reward += reward
                 
@@ -166,7 +166,7 @@ class VPG:
                                 action_clipped = action[0]
                             else:
                                 action_clipped  = np.clip(action, -1, 1)
-                            state, reward, done,_ = eval_env.step(action_clipped*ACTION_SCALE)
+                            state, reward, done,_ = eval_env.step(action_clipped*self.action_scale)
                             eval_return += reward
                         if done:
                             eval_returns.append(eval_return)
