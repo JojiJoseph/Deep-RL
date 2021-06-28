@@ -25,6 +25,7 @@ class DQN:
         self.n_timesteps = n_timesteps
         self.batch_size = batch_size
         self.epsilon = epsilon
+        self.simple_log = True
     def learn(self):
         env_name = self.env_name
         env = gym.make(env_name)
@@ -39,14 +40,7 @@ class DQN:
 
         optim  = torch.optim.Adam(agent.parameters(), lr=self.learning_rate)
 
-        BUFFER_SIZE = self.buffer_size
-        BATCH_SIZE = self.batch_size
-        buffer = ReplayBuffer(1, state_dim, BUFFER_SIZE)
-
-        N_TIMESTEPS = self.n_timesteps
-        UPDATE_EVERY = self.update_every
-        EVALUATE_EVERY = self.evaluate_every
-        GAMMA = self.gamma
+        buffer = ReplayBuffer(1, state_dim, self.buffer_size)
 
         timestep = 0
 
@@ -62,7 +56,7 @@ class DQN:
         highscore = -np.inf
         episode_steps = 0
 
-        while timestep < N_TIMESTEPS:
+        while timestep < self.n_timesteps:
             timestep += 1
             state = torch.from_numpy(_state[None,:]).float()
             with torch.no_grad():
@@ -84,19 +78,22 @@ class DQN:
                 episodes_passed += 1
                 log_data.append([episodes_passed, timestep, episodic_reward])
 
-                Logger.print_boundary()
-                Logger.print("Episode", episodes_passed)
-                Logger.print("Episodic Reward", episodic_reward)
-                Logger.print("Timesteps", timestep)
-                Logger.print_boundary()
+                if self.simple_log:
+                    print(f"Episode: {episodes_passed}, return: {episodic_reward}, timesteps elapsed: {timestep}")
+                else:
+                    Logger.print_boundary()
+                    Logger.print("Episode", episodes_passed)
+                    Logger.print("Episodic Reward", episodic_reward)
+                    Logger.print("Timesteps", timestep)
+                    Logger.print_boundary()
 
                 episodic_reward = 0
                 episode_steps = 0
                 _state = env.reset()
 
-            if timestep % UPDATE_EVERY == 0 and timestep > BUFFER_SIZE:
-                for i in range(UPDATE_EVERY):
-                    state_batch, action_batch, reward_batch, next_batch, done_batch = buffer.get_batch(BATCH_SIZE)
+            if timestep % self.update_every == 0 and timestep > self.buffer_size:
+                for i in range(self.update_every):
+                    state_batch, action_batch, reward_batch, next_batch, done_batch = buffer.get_batch(self.batch_size)
                     
                     state_batch = torch.from_numpy(state_batch).float()
                     action_batch = torch.from_numpy(action_batch).long()
@@ -106,7 +103,7 @@ class DQN:
 
                     with torch.no_grad():
                         max_values, _ = torch.max(agent_target(next_batch), dim=-1, keepdim=True)
-                        target = reward_batch[:,None] + GAMMA*(1-done_batch[:,None])*max_values
+                        target = reward_batch[:,None] + self.gamma*(1-done_batch[:,None])*max_values
 
                     with torch.no_grad():
                         next_actions = torch.argmax(agent(state_batch),dim=-1)
@@ -120,10 +117,10 @@ class DQN:
 
                     optim.step()
 
-            if timestep % (10*UPDATE_EVERY) == 0 and timestep > BUFFER_SIZE:
+            if timestep % (10*self.update_every) == 0 and timestep > self.buffer_size:
                 agent_target.load_state_dict(agent.state_dict())
-            if timestep % EVALUATE_EVERY == 0 and timestep > BUFFER_SIZE:
-                print("\nEvaluation\n==========")
+            if timestep % self.evaluate_every == 0 and timestep > self.buffer_size:
+
                 eval_env = gym.make(env_name)
                 total = 0
                 eval_returns = []
@@ -146,10 +143,17 @@ class DQN:
                 eval_std = np.std(eval_returns)
                 eval_best = np.max(eval_returns)
                 eval_worst = np.min(eval_returns)
-                print(f"Eval Episodes: {self.n_eval_episodes}")
-                print(f"Avg: {eval_avg}")
-                print(f"Std: {eval_std}")
-                print(f"Best: {eval_best}, worst: {eval_worst}")
+
+                Logger.print_boundary()
+                Logger.print_title("Evaluation")
+                Logger.print_double_boundary()
+                Logger.print("Eval Episodes", self.n_eval_episodes)
+                Logger.print("Avg", eval_avg)
+                Logger.print("Std", eval_std)
+                Logger.print("Best", eval_best)
+                Logger.print("Worst", eval_worst)
+                Logger.print_boundary()
+
                 if eval_avg >= highscore:
                     highscore = eval_avg
                     torch.save(agent.state_dict(), f"./results/{self.namespace}.pt")
