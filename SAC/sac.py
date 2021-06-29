@@ -13,7 +13,7 @@ from logger import Logger
 class SAC:
     def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1, alpha=0.2, learning_rate=3e-4,
     gamma=0.99, tau=0.005, n_eval_episodes=10, evaluate_every=10_000, update_every=50, buffer_size=10_000, n_timesteps=1_000_000,
-    batch_size=100):
+    batch_size=100,simple_log=True):
         self.env_name = env_name
         self.namespace = namespace
         self.action_scale = action_scale
@@ -27,10 +27,10 @@ class SAC:
         self.buffer_size = buffer_size
         self.n_timesteps = n_timesteps
         self.batch_size = batch_size
-        self.simple_log = True
+        self.simple_log = simple_log
+
     def learn(self):
         env_name = self.env_name
-
         env = gym.make(env_name)
 
         action_dim = env.action_space.shape[0]
@@ -51,20 +51,9 @@ class SAC:
         opt_c1  = torch.optim.Adam(critic_1.parameters(), lr=self.learning_rate)
         opt_c2  = torch.optim.Adam(critic_2.parameters(), lr=self.learning_rate)
 
-
-
         buffer = ReplayBuffer(action_dim, state_dim, self.buffer_size)
 
-
-
-
-
-
-
-
-
         timestep = 0
-
 
         _state = env.reset()
         total_reward = 0

@@ -12,7 +12,7 @@ from logger import Logger
 class VPG:
     def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1, learning_rate=3e-4,
     gamma=0.99, n_eval_episodes=10, evaluate_every=10_000, buffer_size=10_000, n_timesteps=1_000_000,
-    batch_size=100,lda=1.0):
+    batch_size=100,lda=1.0,simple_log=True):
         self.env_name = env_name
         self.namespace = namespace
         self.action_scale = action_scale
@@ -24,10 +24,10 @@ class VPG:
         self.n_timesteps = n_timesteps
         self.batch_size = batch_size
         self.lda = lda
-        self.simple_log = True # Hardcoded for now
+        self.simple_log = simple_log
+
     def learn(self):
         env_name = self.env_name
-
         env = gym.make(env_name)
 
         state_dim = env.observation_space.shape[0]
@@ -47,12 +47,7 @@ class VPG:
         opt_actor  = torch.optim.Adam(actor.parameters(), lr=self.learning_rate)
         opt_critic  = torch.optim.Adam(critic.parameters(), lr=self.learning_rate)
 
-
         buffer = RolloutBuffer(action_dim or 1, state_dim, size=self.buffer_size, batch_size=self.batch_size)
-
-
-
-
 
         timestep = 0
 

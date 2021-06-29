@@ -13,7 +13,7 @@ from logger import Logger
 class DQN:
     def __init__(self,namespace="actor",resume=False,env_name="Pendulum", learning_rate=3e-4,
     gamma=0.99, n_eval_episodes=10, evaluate_every=10_000, update_every=50, buffer_size=10_000, n_timesteps=1_000_000,
-    batch_size=100, epsilon=0.2):
+    batch_size=100, epsilon=0.2,simple_log=True):
         self.env_name = env_name
         self.namespace = namespace
         self.learning_rate = learning_rate
@@ -25,7 +25,8 @@ class DQN:
         self.n_timesteps = n_timesteps
         self.batch_size = batch_size
         self.epsilon = epsilon
-        self.simple_log = True
+        self.simple_log = simple_log
+
     def learn(self):
         env_name = self.env_name
         env = gym.make(env_name)
@@ -36,7 +37,6 @@ class DQN:
         # DQN network
         agent = Net(state_dim, n_actions)
         agent_target = deepcopy(agent)
-
 
         optim  = torch.optim.Adam(agent.parameters(), lr=self.learning_rate)
 
