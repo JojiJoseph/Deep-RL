@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
+
 class Net(nn.Module):
     def __init__(self, state_dim, n_actions, size=256):
         super().__init__()

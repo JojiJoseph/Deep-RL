@@ -5,14 +5,15 @@ import gym
 import pybullet_envs
 import csv
 
-from net import Actor,ActorDiscrete,Critic
+from net import Actor, ActorDiscrete, Critic
 from buffer import RolloutBuffer
 from logger import Logger
 
+
 class VPG:
-    def __init__(self,namespace="actor",resume=False,env_name="Pendulum", action_scale=1, learning_rate=3e-4,
-    gamma=0.99, n_eval_episodes=10, evaluate_every=10_000, buffer_size=10_000, n_timesteps=1_000_000,
-    batch_size=100,lda=1.0,simple_log=True):
+    def __init__(self, namespace="actor", resume=False, env_name="Pendulum", action_scale=1, learning_rate=3e-4,
+                 gamma=0.99, n_eval_episodes=10, evaluate_every=10_000, buffer_size=10_000, n_timesteps=1_000_000,
+                 batch_size=100, lda=1.0, simple_log=True):
         self.env_name = env_name
         self.namespace = namespace
         self.action_scale = action_scale
@@ -43,11 +44,13 @@ class VPG:
             actor = Actor(state_dim, action_dim)
 
         critic = Critic(state_dim, None)
-        
-        opt_actor  = torch.optim.Adam(actor.parameters(), lr=self.learning_rate)
-        opt_critic  = torch.optim.Adam(critic.parameters(), lr=self.learning_rate)
 
-        buffer = RolloutBuffer(action_dim or 1, state_dim, size=self.buffer_size, batch_size=self.batch_size)
+        opt_actor = torch.optim.Adam(actor.parameters(), lr=self.learning_rate)
+        opt_critic = torch.optim.Adam(
+            critic.parameters(), lr=self.learning_rate)
+
+        buffer = RolloutBuffer(action_dim or 1, state_dim,
+                               size=self.buffer_size, batch_size=self.batch_size)
 
         timestep = 0
 
@@ -65,7 +68,7 @@ class VPG:
 
         while timestep < self.n_timesteps:
             timestep += 1
-            state = torch.from_numpy(_state[None,:]).float()
+            state = torch.from_numpy(_state[None, :]).float()
             with torch.no_grad():
                 action, _ = actor.get_action(state)
                 action = action[0].detach().cpu().numpy()
@@ -73,21 +76,24 @@ class VPG:
             if type(env.action_space) == gym.spaces.Discrete:
                 action_clipped = action[0]
             else:
-                action_clipped  = np.clip(action, -1, 1)
-            next_state, reward, done, _ = env.step(action_clipped*self.action_scale)
+                action_clipped = np.clip(action, -1, 1)
+            next_state, reward, done, _ = env.step(
+                action_clipped*self.action_scale)
 
             episodic_reward += reward
-                
+
             episode_steps += 1
 
-            buffer.add(_state.copy(), action.copy(), reward, next_state.copy(),not(done and episode_steps == env._max_episode_steps) and done, val)
+            buffer.add(_state.copy(), action.copy(), reward, next_state.copy(), not(
+                done and episode_steps == env._max_episode_steps) and done, val)
 
             _state = next_state
             if done:
                 episodes_passed += 1
                 log_data.append([episodes_passed, timestep, episodic_reward])
                 if self.simple_log:
-                    print(f"Episode: {episodes_passed}, return: {episodic_reward}, timesteps elapsed: {timestep}")
+                    print(
+                        f"Episode: {episodes_passed}, return: {episodic_reward}, timesteps elapsed: {timestep}")
                 else:
                     Logger.print_boundary()
                     Logger.print("Episode", episodes_passed)
@@ -99,14 +105,17 @@ class VPG:
                 episode_steps = 0
                 _state = env.reset()
 
-            done = not(done and episode_steps == env._max_episode_steps) and done
+            done = not(done and episode_steps ==
+                       env._max_episode_steps) and done
 
             if timestep % self.buffer_size == 0:
-                val = 0 if done else critic(torch.from_numpy(_state[:]).float())[0].detach().cpu().numpy().item()
-                buffer.calc_advatages(gamma=self.gamma,lda=self.lda, last_value=val)
+                val = 0 if done else critic(torch.from_numpy(_state[:]).float())[
+                    0].detach().cpu().numpy().item()
+                buffer.calc_advatages(
+                    gamma=self.gamma, lda=self.lda, last_value=val)
                 for batch in buffer:
                     state_batch, action_batch, next_batch, done_batch, adv_batch, ret_batch = batch
-                    
+
                     state_batch = torch.from_numpy(state_batch).float()
                     if type(env.action_space) == gym.spaces.Discrete:
                         action_batch = torch.from_numpy(action_batch).long()
@@ -119,29 +128,33 @@ class VPG:
                     ret_batch = torch.from_numpy(ret_batch).float()
 
                     # Update critic
-                    loss = (ret_batch.flatten().detach()- critic(state_batch).flatten())**2
+                    loss = (ret_batch.flatten().detach() -
+                            critic(state_batch).flatten())**2
                     opt_critic.zero_grad()
                     loss = loss.mean()
                     loss.backward()
-                    torch.nn.utils.clip_grad_norm_(critic.parameters(), 0.5) # Leave this comment as it is
+                    # Leave this comment as it is
+                    torch.nn.utils.clip_grad_norm_(critic.parameters(), 0.5)
                     opt_critic.step()
 
                     # Update actor
                     log_prob = actor.log_prob(action_batch, state_batch)
 
                     # Normalize advantages
-                    adv_batch = (adv_batch - adv_batch.mean())/(adv_batch.std() + 1e-9)
-                    
-                    loss =  log_prob * adv_batch
+                    adv_batch = (adv_batch - adv_batch.mean()) / \
+                        (adv_batch.std() + 1e-9)
+
+                    loss = log_prob * adv_batch
                     loss = -loss.mean()
-                    
+
                     opt_actor.zero_grad()
                     loss.backward()
-                    torch.nn.utils.clip_grad_norm_(actor.parameters(), 0.5) # Leave this comment as it is
+                    # Leave this comment as it is
+                    torch.nn.utils.clip_grad_norm_(actor.parameters(), 0.5)
                     opt_actor.step()
 
                 buffer.clear()
-            
+
             if timestep % self.evaluate_every == 0 and timestep > 0:
 
                 eval_env = gym.make(env_name)
@@ -153,15 +166,16 @@ class VPG:
                     eval_return = 0
                     while not done:
                         with torch.no_grad():
-                            state = state[None,:]
+                            state = state[None, :]
                             state = torch.from_numpy(state).float()
                             action, _ = actor.get_action(state, eval=True)
                             action = action[0].detach().cpu().numpy()
                             if type(env.action_space) == gym.spaces.Discrete:
                                 action_clipped = action[0]
                             else:
-                                action_clipped  = np.clip(action, -1, 1)
-                            state, reward, done,_ = eval_env.step(action_clipped*self.action_scale)
+                                action_clipped = np.clip(action, -1, 1)
+                            state, reward, done, _ = eval_env.step(
+                                action_clipped*self.action_scale)
                             eval_return += reward
                         if done:
                             eval_returns.append(eval_return)
@@ -183,15 +197,15 @@ class VPG:
 
                 if eval_avg >= highscore:
                     highscore = eval_avg
-                    torch.save(actor.state_dict(), f"./results/{self.namespace}.pt")
+                    torch.save(actor.state_dict(),
+                               f"./results/{self.namespace}.pt")
                     print("New High (Avg) Score! Saved!")
                 print(f"highscore (Avg. of eval trials): {highscore}\n")
                 eval_env.close()
 
                 # Save log
-                with open(log_filename,'w',newline='') as file:
+                with open(log_filename, 'w', newline='') as file:
                     writer = csv.writer(file)
                     writer.writerows(log_data)
 
         print("\nTraining is Over!\n")
-
