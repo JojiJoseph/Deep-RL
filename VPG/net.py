@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 
+
 class Actor(nn.Module):
     def __init__(self, state_dim, action_dim, size=256):
         super().__init__()
@@ -11,9 +12,10 @@ class Actor(nn.Module):
         self.l2 = nn.Linear(size, size)
 
         self.mu = nn.Linear(size, action_dim)
-        self.log_std = nn.Parameter(torch.zeros(action_dim), requires_grad=True)
+        self.log_std = nn.Parameter(
+            torch.zeros(action_dim), requires_grad=True)
 
-        self.normal = torch.distributions.Normal(0,0.1)
+        self.normal = torch.distributions.Normal(0, 0.1)
 
         torch.nn.init.uniform_(self.l1.weight.data, -0.001, 0.001)
         torch.nn.init.uniform_(self.l2.weight.data, -0.001, 0.001)
@@ -24,6 +26,7 @@ class Actor(nn.Module):
         y = torch.relu(self.l2(y))
         mu = torch.tanh(self.mu(y))
         return mu, self.log_std
+
     def get_action(self, x, eval=False):
         mu, log_std = self.forward(x)
         distrib = torch.distributions.Normal(mu, torch.exp(log_std))
@@ -39,6 +42,7 @@ class Actor(nn.Module):
         mu, log_std = self.forward(state)
         distrib = torch.distributions.Normal(mu, torch.exp(log_std))
         return distrib.log_prob(action).sum(-1)
+
 
 class ActorDiscrete(nn.Module):
     def __init__(self, state_dim, n_actions, size=256):
@@ -58,7 +62,7 @@ class ActorDiscrete(nn.Module):
         y = torch.relu(self.l2(y))
         logits = self.action_logits(y)
         return logits
-    
+
     def get_action(self, x, eval=False):
         logits = self.forward(x)
         distrib = torch.distributions.Categorical(logits=logits)
@@ -71,6 +75,7 @@ class ActorDiscrete(nn.Module):
         distrib = torch.distributions.Categorical(logits=logits)
         return distrib.log_prob(action)
 
+
 class Critic(nn.Module):
     def __init__(self, state_dim, action_dim, size=256):
         super().__init__()
@@ -80,7 +85,7 @@ class Critic(nn.Module):
         torch.nn.init.uniform_(self.l1.weight.data, -0.001, 0.001)
         torch.nn.init.uniform_(self.l2.weight.data, -0.001, 0.001)
         torch.nn.init.uniform_(self.l3.weight.data, -0.001, 0.001)
-    
+
     def forward(self, x):
         y = torch.relu(self.l1(x))
         y = torch.relu(self.l2(y))

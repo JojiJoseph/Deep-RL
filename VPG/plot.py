@@ -6,7 +6,8 @@ import argparse
 import yaml
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-e","--exp",type=str, required=True,help="The experiment name as defined in the yaml file")
+parser.add_argument("-e", "--exp", type=str, required=True,
+                    help="The experiment name as defined in the yaml file")
 
 with open("./experiments.yaml") as f:
     experiments = yaml.safe_load(f)
@@ -18,9 +19,9 @@ log_filename = f"./results/{experiment}.csv"
 
 df = pd.read_csv(log_filename)
 
-episodes = df.values[:,0]
-timesteps = df.values[:,1]
-returns = df.values[:,2]
+episodes = df.values[:, 0]
+timesteps = df.values[:, 1]
+returns = df.values[:, 2]
 
 plt.plot(episodes, returns)
 plt.title("Returns vs Episodes")
@@ -36,13 +37,15 @@ plt.xlabel("Timestep")
 plt.grid()
 plt.show()
 
+
 def smooth(y, q_size=100):
     q = Deque(maxlen=q_size)
     y_avg = []
     for item in y:
         q.append(item)
-        y_avg.append( np.mean(q) )
+        y_avg.append(np.mean(q))
     return y_avg
+
 
 returns_averaged = smooth(returns)
 

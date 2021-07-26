@@ -11,7 +11,8 @@ from gym.wrappers import Monitor
 from net import Actor, ActorDiscrete
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-e","--exp",type=str, required=True,help="The experiment name as defined in the yaml file")
+parser.add_argument("-e", "--exp", type=str, required=True,
+                    help="The experiment name as defined in the yaml file")
 parser.add_argument("-E", "--eval", action="store_true", help="Evaluation run")
 
 with open("./experiments.yaml") as f:
@@ -24,7 +25,8 @@ hyperparams = experiments[experiment]
 fps = 60
 
 if not eval:
-    eval_env = Monitor(gym.make(hyperparams['env_name']), './results/video/{}_{}'.format(experiment,time.time()), force=True)
+    eval_env = Monitor(gym.make(
+        hyperparams['env_name']), './results/video/{}_{}'.format(experiment, time.time()), force=True)
 else:
     eval_env = gym.make(hyperparams['env_name'])
 
@@ -61,18 +63,18 @@ for episode in range(n_episodes):
     total_return = 0
     while not done:
         with torch.no_grad():
-            state = state[None,:]
+            state = state[None, :]
             state = torch.from_numpy(state).float()
             action, _ = actor.get_action(state, eval=True)
             action = action[0].detach().cpu().numpy()
             if type(eval_env.action_space) == gym.spaces.Discrete:
                 action_clipped = action[0]
             else:
-                action_clipped  = np.clip(action, -1, 1)
+                action_clipped = np.clip(action, -1, 1)
             if not eval:
                 eval_env.render()
                 time.sleep(1/fps)
-            state, reward, done,_ = eval_env.step(action_clipped*ACTION_SCALE)
+            state, reward, done, _ = eval_env.step(action_clipped*ACTION_SCALE)
             total_return += reward
     returns.append(total_return)
     print(f"Episode: {episode+1}, Return: {total_return}")
