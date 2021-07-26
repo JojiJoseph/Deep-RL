@@ -13,8 +13,8 @@ from logger import Logger
 
 class DDPG:
     def __init__(self, namespace="actor", resume=False, env_name="Pendulum", action_scale=1, learning_rate=3e-4,
-                gamma=0.99, tau=0.005, n_eval_episodes=10, evaluate_every=10_000, update_every=50, buffer_size=10_000, n_timesteps=1_000_000,
-                batch_size=100, simple_log=True):
+                 gamma=0.99, tau=0.005, n_eval_episodes=10, evaluate_every=10_000, update_every=50, buffer_size=10_000, n_timesteps=1_000_000,
+                 batch_size=100, simple_log=True):
         self.env_name = env_name
         self.namespace = namespace
         self.action_scale = action_scale
@@ -44,7 +44,8 @@ class DDPG:
         critic_target = deepcopy(critic)
 
         opt_actor = torch.optim.Adam(actor.parameters(), lr=self.learning_rate)
-        opt_critic = torch.optim.Adam(critic.parameters(), lr=self.learning_rate)
+        opt_critic = torch.optim.Adam(
+            critic.parameters(), lr=self.learning_rate)
 
         buffer = ReplayBuffer(action_dim, state_dim, self.buffer_size)
 
@@ -68,7 +69,8 @@ class DDPG:
             state = torch.from_numpy(_state[None, :]).float()
             with torch.no_grad():
                 action = actor.get_action(state)
-                action = np.clip(actor.get_action(state) + normal.sample((1,)), -1, 1)
+                action = np.clip(actor.get_action(state) +
+                                 normal.sample((1,)), -1, 1)
             action = action[0].detach().numpy()
 
             if timestep < self.buffer_size:
@@ -79,14 +81,16 @@ class DDPG:
 
             episode_steps += 1
 
-            buffer.add(_state.copy(), action.copy(), reward, next_state.copy(), not(done and episode_steps == env._max_episode_steps) and done)
+            buffer.add(_state.copy(), action.copy(), reward, next_state.copy(), not(
+                done and episode_steps == env._max_episode_steps) and done)
 
             _state = next_state
             if done:
                 episodes_passed += 1
                 log_data.append([episodes_passed, timestep, episodic_reward])
                 if self.simple_log:
-                    print(f"Episode: {episodes_passed}, return: {episodic_reward}, timesteps elapsed: {timestep}")
+                    print(
+                        f"Episode: {episodes_passed}, return: {episodic_reward}, timesteps elapsed: {timestep}")
                 else:
                     Logger.print_boundary()
                     Logger.print("Episode", episodes_passed)
@@ -100,7 +104,8 @@ class DDPG:
 
             if timestep % self.update_every == 0 and timestep > self.buffer_size:
                 for batch_idx in range(self.update_every):
-                    state_batch, action_batch, reward_batch, next_batch, done_batch = buffer.get_batch(self.batch_size)
+                    state_batch, action_batch, reward_batch, next_batch, done_batch = buffer.get_batch(
+                        self.batch_size)
 
                     state_batch = torch.from_numpy(state_batch).float()
                     action_batch = torch.from_numpy(action_batch).float()
@@ -109,12 +114,15 @@ class DDPG:
                     done_batch = torch.from_numpy(done_batch).long()
 
                     with torch.no_grad():
-                        next_actions = np.clip(actor_target.get_action(next_batch) + np.clip(normal.sample((self.batch_size, 1)), -0.5, 0.5), -1, 1)
+                        next_actions = np.clip(actor_target.get_action(
+                            next_batch) + np.clip(normal.sample((self.batch_size, 1)), -0.5, 0.5), -1, 1)
                         predicted_q = critic_target(next_batch, next_actions)
-                        target = reward_batch[:, None] + self.gamma*(1-done_batch[:, None])*predicted_q
+                        target = reward_batch[:, None] + self.gamma * \
+                            (1-done_batch[:, None])*predicted_q
 
                     # Update critic
-                    loss = (target.flatten().detach() - critic(state_batch, action_batch).flatten())**2
+                    loss = (target.flatten().detach() -
+                            critic(state_batch, action_batch).flatten())**2
                     opt_critic.zero_grad()
                     loss = loss.mean()
                     loss.backward()
@@ -152,7 +160,8 @@ class DDPG:
                             state = torch.from_numpy(state).float()
                             action = actor.get_action(state, eval=True)
                             action = action[0].detach().cpu().numpy()
-                            state, reward, done, _ = eval_env.step(action*self.action_scale)
+                            state, reward, done, _ = eval_env.step(
+                                action*self.action_scale)
                             eval_return += reward
                         if done:
                             eval_returns.append(eval_return)
@@ -174,7 +183,8 @@ class DDPG:
 
                 if eval_avg >= highscore:
                     highscore = eval_avg
-                    torch.save(actor.state_dict(), f"./results/{self.namespace}.pt")
+                    torch.save(actor.state_dict(),
+                               f"./results/{self.namespace}.pt")
                     print("New High (Avg) Score! Saved!")
                 print(f"highscore: {highscore}\n")
                 eval_env.close()
