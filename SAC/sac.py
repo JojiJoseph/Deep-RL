@@ -12,9 +12,9 @@ from logger import Logger
 
 
 class SAC:
-    def __init__(self, namespace="actor", resume=False, env_name="Pendulum", action_scale=1, alpha=0.2, learning_rate=3e-4,
-                 gamma=0.99, tau=0.005, n_eval_episodes=10, evaluate_every=10_000, update_every=50, buffer_size=10_000, n_timesteps=1_000_000,
-                 batch_size=100, simple_log=True):
+    def __init__(self, namespace="actor", resume=False, env_name="Pendulum", action_scale=1, alpha=0.2,
+                 learning_rate=3e-4, gamma=0.99, tau=0.005, n_eval_episodes=10, evaluate_every=10_000,
+                 update_every=50, buffer_size=10_000, n_timesteps=1_000_000, batch_size=100, simple_log=True):
         self.env_name = env_name
         self.namespace = namespace
         self.action_scale = action_scale
@@ -75,7 +75,7 @@ class SAC:
 
             if timestep < self.buffer_size:
                 action = env.action_space.sample()
-            next_state, reward, done, _ = env.step(action*self.action_scale)
+            next_state, reward, done, _ = env.step(action * self.action_scale)
             total_reward += reward
             episodic_reward += reward
 
@@ -117,19 +117,17 @@ class SAC:
                         next_actions, log_prob = actor.get_action(next_batch)
                         predicted_q = torch.minimum(critic_target_1(
                             next_batch, next_actions), critic_target_2(next_batch, next_actions))
-                        target = reward_batch[:, None] + self.gamma*(1-done_batch[:, None])*(
-                            predicted_q - self.alpha*log_prob[:, None].detach())
+                        target = reward_batch[:, None] + self.gamma * (1 - done_batch[:, None]) * (
+                            predicted_q - self.alpha * log_prob[:, None].detach())
 
                     # Update critics
-                    loss = (target.flatten().detach() -
-                            critic_1(state_batch, action_batch).flatten())**2
+                    loss = (target.flatten().detach() - critic_1(state_batch, action_batch).flatten())**2
                     opt_c1.zero_grad()
                     loss = loss.mean()
                     loss.backward()
                     opt_c1.step()
 
-                    loss = (target.flatten().detach() -
-                            critic_2(state_batch, action_batch).flatten())**2
+                    loss = (target.flatten().detach() - critic_2(state_batch, action_batch).flatten())**2
                     loss = loss.mean()
                     opt_c2.zero_grad()
                     loss.backward()
@@ -139,7 +137,7 @@ class SAC:
                     actions, log_prob = actor.get_action(state_batch)
                     predicted_q = torch.minimum(critic_1(state_batch, actions).flatten(
                     ), critic_2(state_batch, actions).flatten())  # .detach()
-                    loss = predicted_q - self.alpha*log_prob.flatten()
+                    loss = predicted_q - self.alpha * log_prob.flatten()
                     loss = -loss.mean()
                     opt_actor.zero_grad()
                     loss.backward()
@@ -147,11 +145,11 @@ class SAC:
 
                     with torch.no_grad():
                         for pt, p in zip(critic_target_1.parameters(), critic_1.parameters()):
-                            pt.data.mul_(1-self.tau)
-                            pt.data.add_(self.tau*p.data)
+                            pt.data.mul_(1 - self.tau)
+                            pt.data.add_(self.tau * p.data)
                         for pt, p in zip(critic_target_2.parameters(), critic_2.parameters()):
-                            pt.data.mul_(1-self.tau)
-                            pt.data.add_(self.tau*p.data)
+                            pt.data.mul_(1 - self.tau)
+                            pt.data.add_(self.tau * p.data)
 
             if timestep % self.evaluate_every == 0 and timestep > self.buffer_size:
 
@@ -169,7 +167,7 @@ class SAC:
                             action, _ = actor.get_action(state, eval=True)
                             action = action[0].detach().cpu().numpy()
                             state, reward, done, _ = eval_env.step(
-                                action*self.action_scale)
+                                action * self.action_scale)
                             eval_return += reward
                         if done:
                             eval_returns.append(eval_return)

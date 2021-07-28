@@ -73,8 +73,8 @@ for episode in range(n_episodes):
                 action_clipped = np.clip(action, -1, 1)
             if not eval:
                 eval_env.render()
-                time.sleep(1/fps)
-            state, reward, done, _ = eval_env.step(action_clipped*ACTION_SCALE)
+                time.sleep(1 / fps)
+            state, reward, done, _ = eval_env.step(action_clipped * ACTION_SCALE)
             total_return += reward
     returns.append(total_return)
     print(f"Episode: {episode+1}, Return: {total_return}")

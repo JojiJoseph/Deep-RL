@@ -9,8 +9,8 @@ class Logger:
 
     @staticmethod
     def print_boundary():
-        print("-"*47)
+        print("-" * 47)
 
     @staticmethod
     def print_double_boundary():
-        print("|" + "="*45 + "|")
+        print("|" + "=" * 45 + "|")

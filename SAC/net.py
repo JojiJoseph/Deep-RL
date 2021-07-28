@@ -26,13 +26,11 @@ class Actor(nn.Module):
         mu, log_std = self.forward(x)
         if eval:
             return torch.tanh(mu), None
-        batch_size = x.shape[0]
         log_std = torch.clamp(log_std, -20, 2)
         dist = torch.distributions.Normal(mu, torch.exp(log_std))
         action = dist.rsample()
         log_prob = dist.log_prob(action).sum(axis=-1)
-        # log_prob -= (2*(np.log(2) - action - torch.nn.functional.softplus(-2*action))).sum(axis=1) # From spinning up. Leve this comment as it is for now
-        log_prob -= torch.log(1-torch.tanh(action)**2 + 1e-9).sum(axis=-1)
+        log_prob -= torch.log(1 - torch.tanh(action)**2 + 1e-9).sum(axis=-1)
 
         action = torch.tanh(action)
         return action, log_prob

@@ -38,13 +38,9 @@ else:
 state_dim = eval_env.observation_space.shape[0]
 n_actions = None
 action_dim = None
-if type(eval_env.action_space) == gym.spaces.Discrete:
-    n_actions = eval_env.action_space.n
-    actor = Net(state_dim, n_actions)
-else:
-    action_dim = eval_env.action_space.shape[0]
-    actor = Actor(state_dim, action_dim)
 
+n_actions = eval_env.action_space.n
+actor = Net(state_dim, n_actions)
 
 actor.load_state_dict(torch.load(f"./results/{experiment}.pt"))
 try:
@@ -72,8 +68,8 @@ for episode in range(n_episodes):
                 action_clipped = np.clip(action, -1, 1)
             if not eval:
                 eval_env.render()
-                time.sleep(1/fps)
-            state, reward, done, _ = eval_env.step(action_clipped*ACTION_SCALE)
+                time.sleep(1 / fps)
+            state, reward, done, _ = eval_env.step(action_clipped * ACTION_SCALE)
             total_return += reward
     returns.append(total_return)
     print(f"Episode: {episode+1}, Return: {total_return}")

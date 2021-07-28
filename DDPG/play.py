@@ -63,8 +63,8 @@ for episode in range(n_episodes):
             action = action[0].detach().cpu().numpy()
             if not eval:
                 eval_env.render()
-                time.sleep(1/fps)
-            state, reward, done, _ = eval_env.step(action*ACTION_SCALE)
+                time.sleep(1 / fps)
+            state, reward, done, _ = eval_env.step(action * ACTION_SCALE)
             total_return += reward
     returns.append(total_return)
     print(f"Episode: {episode+1}, Return: {total_return}")
