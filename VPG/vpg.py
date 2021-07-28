@@ -78,7 +78,7 @@ class VPG:
             else:
                 action_clipped = np.clip(action, -1, 1)
             next_state, reward, done, _ = env.step(
-                action_clipped*self.action_scale)
+                action_clipped * self.action_scale)
 
             episodic_reward += reward
 
@@ -105,8 +105,7 @@ class VPG:
                 episode_steps = 0
                 _state = env.reset()
 
-            done = not(done and episode_steps ==
-                       env._max_episode_steps) and done
+            done = not(done and episode_steps == env._max_episode_steps) and done
 
             if timestep % self.buffer_size == 0:
                 val = 0 if done else critic(torch.from_numpy(_state[:]).float())[
@@ -128,8 +127,7 @@ class VPG:
                     ret_batch = torch.from_numpy(ret_batch).float()
 
                     # Update critic
-                    loss = (ret_batch.flatten().detach() -
-                            critic(state_batch).flatten())**2
+                    loss = (ret_batch.flatten().detach() - critic(state_batch).flatten())**2
                     opt_critic.zero_grad()
                     loss = loss.mean()
                     loss.backward()
@@ -175,7 +173,7 @@ class VPG:
                             else:
                                 action_clipped = np.clip(action, -1, 1)
                             state, reward, done, _ = eval_env.step(
-                                action_clipped*self.action_scale)
+                                action_clipped * self.action_scale)
                             eval_return += reward
                         if done:
                             eval_returns.append(eval_return)

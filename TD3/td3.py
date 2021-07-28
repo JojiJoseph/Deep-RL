@@ -13,8 +13,8 @@ from logger import Logger
 
 class TD3:
     def __init__(self, namespace="actor", resume=False, env_name="Pendulum", action_scale=1, learning_rate=3e-4,
-                 gamma=0.99, tau=0.005, n_eval_episodes=10, evaluate_every=10_000, update_every=50, buffer_size=10_000, n_timesteps=1_000_000,
-                 batch_size=100, simple_log=True):
+                 gamma=0.99, tau=0.005, n_eval_episodes=10, evaluate_every=10_000, update_every=50,
+                 buffer_size=10_000, n_timesteps=1_000_000, batch_size=100, simple_log=True):
         self.env_name = env_name
         self.namespace = namespace
         self.action_scale = action_scale
@@ -74,13 +74,12 @@ class TD3:
             state = torch.from_numpy(_state[None, :]).float()
             with torch.no_grad():
                 action = actor.get_action(state)
-                action = np.clip(actor.get_action(state) +
-                                 normal.sample((1,)), -1, 1)
+                action = np.clip(actor.get_action(state) + normal.sample((1,)), -1, 1)
             action = action[0].detach().numpy()
 
             if timestep < self.buffer_size:
                 action = env.action_space.sample()
-            next_state, reward, done, _ = env.step(action*self.action_scale)
+            next_state, reward, done, _ = env.step(action * self.action_scale)
             total_reward += reward
             episodic_reward += reward
 
@@ -124,18 +123,16 @@ class TD3:
                         predicted_q = torch.minimum(critic_target_1(
                             next_batch, next_actions), critic_target_2(next_batch, next_actions))
                         target = reward_batch[:, None] + self.gamma * \
-                            (1-done_batch[:, None])*(predicted_q)
+                            (1 - done_batch[:, None]) * (predicted_q)
 
                     # Update critics
-                    loss = (target.flatten().detach() -
-                            critic_1(state_batch, action_batch).flatten())**2
+                    loss = (target.flatten().detach() - critic_1(state_batch, action_batch).flatten())**2
                     opt_c1.zero_grad()
                     loss = loss.mean()
                     loss.backward()
                     opt_c1.step()
 
-                    loss = (target.flatten().detach() -
-                            critic_2(state_batch, action_batch).flatten())**2
+                    loss = (target.flatten().detach() - critic_2(state_batch, action_batch).flatten())**2
                     loss = loss.mean()
                     opt_c2.zero_grad()
                     loss.backward()
@@ -153,14 +150,14 @@ class TD3:
                     with torch.no_grad():
                         if batch_idx % 2 == 0:
                             for pt, p in zip(actor_target.parameters(), actor.parameters()):
-                                pt.data.mul_(1-self.tau)
-                                pt.data.add_(self.tau*p.data)
+                                pt.data.mul_(1 - self.tau)
+                                pt.data.add_(self.tau * p.data)
                         for pt, p in zip(critic_target_1.parameters(), critic_1.parameters()):
-                            pt.data.mul_(1-self.tau)
-                            pt.data.add_(self.tau*p.data)
+                            pt.data.mul_(1 - self.tau)
+                            pt.data.add_(self.tau * p.data)
                         for pt, p in zip(critic_target_2.parameters(), critic_2.parameters()):
-                            pt.data.mul_(1-self.tau)
-                            pt.data.add_(self.tau*p.data)
+                            pt.data.mul_(1 - self.tau)
+                            pt.data.add_(self.tau * p.data)
 
             if timestep % self.evaluate_every == 0 and timestep > self.buffer_size:
 
@@ -178,7 +175,7 @@ class TD3:
                             action = actor.get_action(state, eval=True)
                             action = action[0].detach().cpu().numpy()
                             state, reward, done, _ = eval_env.step(
-                                action*self.action_scale)
+                                action * self.action_scale)
                             eval_return += reward
                         if done:
                             eval_returns.append(eval_return)

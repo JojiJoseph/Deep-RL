@@ -37,10 +37,10 @@ class RolloutBuffer:
     def calc_advatages(self, last_value=0, gamma=0.99, lda=0.95):
         n = self.idx
         prev_adv = 0  # Hardcoded
-        for i in range(n-1, -1, -1):
-            delta = self.rewards[i] + gamma*last_value * \
-                (1-self.dones[i]) - self.values[i]
-            adv = delta + lda*gamma*(1-self.dones[i])*prev_adv
+        for i in range(n - 1, -1, -1):
+            delta = self.rewards[i] + gamma * last_value * \
+                (1 - self.dones[i]) - self.values[i]
+            adv = delta + lda * gamma * (1 - self.dones[i]) * prev_adv
             prev_adv = adv
             last_value = self.values[i]
             self.advantages[i] = adv
@@ -56,12 +56,12 @@ class RolloutBuffer:
     def __next__(self):
         idx, batch_size = self.idx, self.batch_size
         if self.idx + self.batch_size <= len(self.states):
-            state_batch = self.states[idx:idx+batch_size]
-            action_batch = self.actions[idx:idx+batch_size]
-            adv_batch = self.advantages[idx:idx+batch_size]
-            ret_batch = self.returns[idx:idx+batch_size]
-            done_batch = self.dones[idx:idx+batch_size]
-            next_batch = self.next_states[idx:idx+batch_size]
+            state_batch = self.states[idx:idx + batch_size]
+            action_batch = self.actions[idx:idx + batch_size]
+            adv_batch = self.advantages[idx:idx + batch_size]
+            ret_batch = self.returns[idx:idx + batch_size]
+            done_batch = self.dones[idx:idx + batch_size]
+            next_batch = self.next_states[idx:idx + batch_size]
 
             state_batch = state_batch.reshape((-1, self.state_dim))
             action_batch = action_batch.reshape((-1, self.action_dim))

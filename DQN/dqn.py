@@ -1,10 +1,11 @@
+import os
+from copy import deepcopy
+import csv
 import torch
 import torch.nn as nn
 import numpy as np
 import gym
-from copy import deepcopy
 import pybullet_envs
-import csv
 
 from net import Net
 from buffer import ReplayBuffer
@@ -13,8 +14,8 @@ from logger import Logger
 
 class DQN:
     def __init__(self, namespace="actor", resume=False, env_name="Pendulum", learning_rate=3e-4,
-                 gamma=0.99, n_eval_episodes=10, evaluate_every=10_000, update_every=50, buffer_size=10_000, n_timesteps=1_000_000,
-                 batch_size=100, epsilon=0.2, simple_log=True):
+                 gamma=0.99, n_eval_episodes=10, evaluate_every=10_000, update_every=50,
+                 buffer_size=10_000, n_timesteps=1_000_000, batch_size=100, epsilon=0.2, simple_log=True):
         self.env_name = env_name
         self.namespace = namespace
         self.learning_rate = learning_rate
@@ -51,6 +52,8 @@ class DQN:
         episodes_passed = 0
 
         # Setup the CSV
+        # Create folder if doesn't exist
+        os.makedirs("./results", exist_ok=True)
         log_filename = f"./results/{self.namespace}.csv"
         log_data = [["Episode", "End Step", "Episodic Reward"]]
 
@@ -109,13 +112,10 @@ class DQN:
                         max_values, _ = torch.max(agent_target(
                             next_batch), dim=-1, keepdim=True)
                         target = reward_batch[:, None] + self.gamma * \
-                            (1-done_batch[:, None])*max_values
-
-                    with torch.no_grad():
-                        next_actions = torch.argmax(agent(state_batch), dim=-1)
+                            (1 - done_batch[:, None]) * max_values
 
                     prediction = torch.sum(agent(
-                        state_batch)*(torch.eye(n_actions)[action_batch.flatten()]), dim=-1, keepdim=True)
+                        state_batch) * (torch.eye(n_actions)[action_batch.flatten()]), dim=-1, keepdim=True)
 
                     loss = (target - prediction)**2
                     optim.zero_grad()
@@ -124,12 +124,12 @@ class DQN:
 
                     optim.step()
 
-            if timestep % (10*self.update_every) == 0 and timestep > self.buffer_size:
+            if timestep % (10 * self.update_every) == 0 and timestep > self.buffer_size:
                 agent_target.load_state_dict(agent.state_dict())
             if timestep % self.evaluate_every == 0 and timestep > self.buffer_size:
 
                 eval_env = gym.make(env_name)
-                total = 0
+
                 eval_returns = []
                 for episode in range(self.n_eval_episodes):
                     state = eval_env.reset()
