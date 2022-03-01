@@ -1,6 +1,6 @@
 # Working fine
 pendulum:
-  env_name: "Pendulum-v0"
+  env_name: "Pendulum-v1"
   action_scale: 2
   gamma: 0.99
   tau: 0.05

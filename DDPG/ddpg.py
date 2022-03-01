@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import gym
+import os
 from copy import deepcopy
 import pybullet_envs
 import csv
@@ -28,6 +29,7 @@ class DDPG:
         self.n_timesteps = n_timesteps
         self.batch_size = batch_size
         self.simple_log = simple_log
+        os.makedirs("./results", exist_ok=True)
 
     def learn(self):
         env_name = self.env_name

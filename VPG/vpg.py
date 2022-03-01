@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import numpy as np
 import gym
+import os
 import pybullet_envs
 import csv
 
@@ -26,6 +27,7 @@ class VPG:
         self.batch_size = batch_size
         self.lda = lda
         self.simple_log = simple_log
+        os.makedirs("./results", exists_ok=True)
 
     def learn(self):
         env_name = self.env_name
