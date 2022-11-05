@@ -33,3 +33,4 @@ python plot.py -e experiment_name
 | DDPG      | Yes            |                                 |
 | VPG       | Yes (Discrete) | Test on continuous action space |
 | DQN       | Yes            |                                 |
+| DDQN      | Yes           |                                 |
