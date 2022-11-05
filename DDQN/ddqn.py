@@ -111,7 +111,8 @@ class DDQN:
                     with torch.no_grad():
                         _, actions = torch.max(agent(
                             next_batch), dim=-1, keepdim=True)
-                        max_values = torch.sum(agent_target(next_batch)*(torch.eye(n_actions)[actions.flatten()]), dim=-1, keepdim=True)
+                        max_values = torch.sum(agent_target(next_batch) * (torch.eye(n_actions)
+                                               [actions.flatten()]), dim=-1, keepdim=True)
                         target = reward_batch[:, None] + self.gamma * \
                             (1 - done_batch[:, None]) * max_values
 
