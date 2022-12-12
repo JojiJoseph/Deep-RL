@@ -10,6 +10,7 @@ import pybullet_envs
 from net import Net
 from buffer import ReplayBuffer
 from logger import Logger
+import time
 
 
 class DQN:
@@ -114,8 +115,10 @@ class DQN:
                         target = reward_batch[:, None] + self.gamma * \
                             (1 - done_batch[:, None]) * max_values
 
+                    # prediction = torch.sum(agent(
+                    #     state_batch) * (torch.eye(n_actions)[action_batch.flatten()]), dim=-1, keepdim=True) # Same as below, but keeping it as a reference to future me
                     prediction = torch.sum(agent(
-                        state_batch) * (torch.eye(n_actions)[action_batch.flatten()]), dim=-1, keepdim=True)
+                        state_batch).gather(1, action_batch), dim=-1, keepdim=True)
 
                     loss = (target - prediction)**2
                     optim.zero_grad()
